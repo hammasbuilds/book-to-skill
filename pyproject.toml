@@ -1,0 +1,40 @@
+[project]
+name = "book-to-skill"
+version = "0.1.0"
+description = "Turn a technical book PDF into a Claude Code skill package, and measure what the conversion loses."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+keywords = [
+    "pdf", "text-extraction", "agent-skills", "claude-code", "rag", "bm25",
+    "retrieval", "document-structure", "llm-evaluation",
+]
+# One runtime dependency: pypdf (pure Python, itself dependency-free) for
+# reading the PDF content streams. Everything downstream of the raw glyph
+# stream - layout repair, structure detection, chunking, BM25, the skill
+# writer, the Ollama client - is standard library.
+dependencies = ["pypdf>=6,<7"]
+
+[project.scripts]
+book-to-skill = "booktoskill.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff==0.16.7"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/booktoskill"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
