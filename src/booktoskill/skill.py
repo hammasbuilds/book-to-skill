@@ -25,7 +25,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from booktoskill.bm25 import STOPWORDS
+from booktoskill.bm25 import STOPWORDS, stem
 from booktoskill.layout import Block
 from booktoskill.structure import Book, Chapter, is_content_chapter
 
@@ -106,8 +106,8 @@ def distinctive_terms(
         )
         picked: list[str] = []
         for _, term in scored:
-            parts = set(term.split())
-            covered = [p for p in picked if parts & set(p.split())]
+            parts = {stem(w) for w in term.split()}  # "card" and "cards" overlap
+            covered = [p for p in picked if parts & {stem(w) for w in p.split()}]
             if covered:
                 # A phrase may absorb one single word it contains; otherwise skip.
                 if " " in term and len(covered) == 1 and " " not in covered[0]:

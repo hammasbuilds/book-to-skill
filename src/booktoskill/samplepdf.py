@@ -184,8 +184,8 @@ def tiny_book() -> list[PageSpec]:
     p4.line(700, [("R", "Loops can also be nested inside each other, which is common when")])
     p4.line(686, [("R", "processing tables of data.")])
     p4.line(640, [("B", "2.2 Functions")], size=14)
-    p4.line(610, [("R", "A function is a named sequence of statements that performs a")])
-    p4.line(596, [("R", "computation. Short functions are a well-")])
+    p4.line(610, [("R", "A named sequence of statements that performs a computation is a func-")])
+    p4.line(596, [("R", "tion. Short functions are a well-")])
     p4.line(582, [("R", "known way to make programs easier to test.")])
 
     p5 = PageSpec()

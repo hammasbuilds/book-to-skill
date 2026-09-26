@@ -233,3 +233,20 @@ def test_term_mentioned() -> None:
     assert term_mentioned([ITEM], refs) == 1.0
     assert term_mentioned([ITEM], {"2": "variable"}) == 0.0
     assert term_mentioned([], refs) == 0.0
+
+
+def test_topics_prefer_phrases_and_merge_plurals() -> None:
+    from booktoskill.layout import Block
+    from booktoskill.skill import distinctive_terms
+    from booktoskill.structure import Chapter
+
+    def chapter(number: str, text: str) -> Chapter:
+        ch = Chapter(number, f"c{number}", 0)
+        ch.intro = [Block("paragraph", text, 0)]
+        return ch
+
+    a = chapter("1", "A tuple assignment swaps values. " * 3 + "Cards and a card deck. " * 3)
+    b = chapter("2", "Loops repeat statements. " * 3)
+    topics = distinctive_terms([a, b], (), n=8)[0]
+    assert "tuple assignment" in topics and "tuple" not in topics
+    assert not ({"card", "cards"} <= set(topics))

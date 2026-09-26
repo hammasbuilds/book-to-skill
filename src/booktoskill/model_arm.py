@@ -65,7 +65,7 @@ def term_mentioned(items: list[GoldItem], refs: dict[str, str]) -> float:
 
 def plan(data_dir: str | Path) -> dict:
     """The job list and call count, without calling any model."""
-    specs = book_specs(data_dir)
+    specs = [s for s in book_specs(data_dir) if s.tex is not None]  # books with questions
     check_inputs(specs)
     per_item = calls_per_item(n_skills=2)
     jobs = []
@@ -127,7 +127,7 @@ def run(
     judge_client: Client,
     k: int = 5,
 ) -> dict:
-    specs = book_specs(data_dir)
+    specs = [s for s in book_specs(data_dir) if s.tex is not None]  # books with questions
     check_inputs(specs)
     results_dir, out_dir = Path(results_dir), Path(out_dir)
     results_dir.mkdir(parents=True, exist_ok=True)

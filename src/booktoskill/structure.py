@@ -3,7 +3,7 @@
 Heading levels come from font size alone, ranked: the size used for chapter
 titles (the one that follows a "Chapter N" label, or failing that the largest
 size used more than once) is level 1, the next size down that occurs at least
-three times is level 2. Anything smaller stays inside its section as a bold
+three times is level 2. Anything smaller stays inside its section as an inline
 sub-heading. The PDF outline is never consulted; ``experiments.py`` compares
 this against the outline and against the book's real table of contents.
 """
@@ -19,6 +19,7 @@ from booktoskill.layout import Block
 _LABEL_RE = re.compile(r"^(?:chapter|appendix|part)\s+([0-9]+|[A-Z])\.?$", re.I)
 # A label and its title set at the same size are joined into one heading block.
 _LABELLED_TITLE_RE = re.compile(r"^(?:chapter|appendix|part)\s+([0-9]+|[A-Z])\.?\s+(.+)$", re.I)
+_APPENDIX_RE = re.compile(r"^appendix\s+([A-Z])\b", re.I)
 _SECTION_NUM_RE = re.compile(r"^((?:[0-9]+|[A-Z])\.[0-9]+)\.?\s+(.*)$")
 _CHAPTER_NUM_RE = re.compile(r"^([0-9]+)\.?\s+(\D.*)$")
 
@@ -72,7 +73,11 @@ def heading_levels(blocks: list[Block]) -> tuple[float | None, float | None]:
     headings = [b for b in blocks if b.kind == "heading"]
     if not headings:
         return None, None
-    counts = Counter(_round(b.size) for b in headings)
+    # "Chapter 3" labels are not titles of anything; counting them would make
+    # the label size look like a heading level of its own.
+    counts = Counter(_round(b.size) for b in headings if not _LABEL_RE.match(b.text.strip()))
+    if not counts:
+        return None, None
     chapter_size = None
     for a, b in zip(headings, headings[1:], strict=False):
         if _LABEL_RE.match(a.text.strip()) and b.page == a.page:
@@ -81,10 +86,11 @@ def heading_levels(blocks: list[Block]) -> tuple[float | None, float | None]:
     if chapter_size is None:
         repeated = [s for s, n in counts.items() if n >= 2]
         chapter_size = max(repeated) if repeated else max(counts)
-    # Sections are the most frequent heading below chapter level; the largest
-    # smaller size can be a one-off (a figure label set in a display font).
-    smaller = [(n, s) for s, n in counts.items() if s < chapter_size and n >= 3]
-    return chapter_size, (max(smaller)[1] if smaller else None)
+    # Sections are the largest size below chapter level that recurs (>= 3
+    # times); smaller recurring sizes are subsections, which may well be more
+    # numerous than sections.
+    smaller = [s for s, n in counts.items() if s < chapter_size and n >= 3]
+    return chapter_size, (max(smaller) if smaller else None)
 
 
 def detect_structure(blocks: list[Block], title: str = "") -> Book:
@@ -118,6 +124,8 @@ def detect_structure(blocks: list[Block], title: str = "") -> Book:
             current.sections[-1].blocks.append(block)
         else:
             current.intro.append(block)
+    if not any(ch.number for ch in chapters):
+        _number_unlabelled(chapters)
     if front.intro or front.sections:
         chapters.insert(0, front)
     return Book(
@@ -125,6 +133,25 @@ def detect_structure(blocks: list[Block], title: str = "") -> Book:
         chapters=chapters,
         heading_sizes={"chapter": chapter_size or 0.0, "section": section_size or 0.0},
     )
+
+
+def _number_unlabelled(chapters: list[Chapter]) -> None:
+    """Number chapters in a book that prints no chapter numbers (Pro Git).
+
+    Title-level headings with at least two sections are chapters, numbered in
+    order; "Appendix X: ..." takes its letter. Headings without sections
+    (license, prefaces, dedication, contents) stay front or back matter.
+    """
+    n = 0
+    for ch in chapters:
+        if len(ch.sections) < 2:
+            continue
+        m = _APPENDIX_RE.match(ch.title)
+        if m:
+            ch.number = m.group(1)
+        else:
+            n += 1
+            ch.number = str(n)
 
 
 def is_content_chapter(chapter: Chapter) -> bool:

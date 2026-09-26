@@ -21,8 +21,8 @@ from booktoskill.samplepdf import PageSpec, write_pdf
 def test_fonts_are_classified_by_their_width_tables(tiny_pdf: Path) -> None:
     pages = read_pdf(tiny_pdf)
     fonts = {r.font.name: r.font for p in pages for ln in p.lines for r in ln.runs}
-    assert fonts["/Courier"].mono and not fonts["/Courier"].bold
-    assert fonts["/Helvetica-Bold"].bold and not fonts["/Helvetica-Bold"].mono
+    assert fonts["/Courier"].mono
+    assert not fonts["/Helvetica-Bold"].mono
     # Helvetica's name has no marker; its varying widths keep it proportional.
     assert not fonts["/Helvetica"].mono
 
@@ -57,7 +57,8 @@ def test_line_break_hyphen_is_joined_but_real_compound_is_kept(tiny: Conversion)
     assert "Programmers write assignments all the time." in text
     # "well-known" occurs elsewhere unbroken, so the break keeps its hyphen.
     assert "Short functions are a well-known way" in text
-    assert tiny.report.hyphen_joins == 1 and tiny.report.hyphens_kept == 1
+    assert "performs a computation is a function. Short" in text
+    assert tiny.report.hyphen_joins == 2 and tiny.report.hyphens_kept == 1
 
 
 def test_code_block_keeps_indentation(tiny: Conversion) -> None:
@@ -134,3 +135,58 @@ def test_empty_pdf_gives_no_blocks(tmp_path: Path) -> None:
     pages = read_pdf(write_pdf(tmp_path / "empty.pdf", [PageSpec()]))
     blocks, report = build_blocks(pages)
     assert blocks == [] and report == replace(RepairReport(), body_size=10.0)
+
+
+def test_blank_line_inside_a_listing_is_kept(tmp_path: Path) -> None:
+    spec = PageSpec()
+    spec.line(700, [("R", "Here is a function with a blank line in it, set in a listing")])
+    spec.line(686, [("R", "that follows this paragraph of ordinary prose, like so:")])
+    spec.line(662, [("M", "def clean(df):")])
+    spec.line(648, [("M", "df.age /= 100")], x=72 + 4 * 6)
+    spec.line(620, [("M", "return df")], x=72 + 4 * 6)
+    spec.line(596, [("R", "That is the whole function, and the text goes on from here")])
+    spec.line(582, [("R", "for another line or two, at the usual line spacing.")])
+    blocks, _ = build_blocks(read_pdf(write_pdf(tmp_path / "c.pdf", [spec])))
+    code = [b.text for b in blocks if b.kind == "code"]
+    assert code == ["def clean(df):\n    df.age /= 100\n\n    return df"]
+
+
+def test_parse_tounicode_handles_bfchar_and_both_bfrange_forms() -> None:
+    from booktoskill.pdftext import parse_tounicode
+
+    cmap = (
+        b"2 beginbfchar\n<0003> <0020>\n<0004> <00660069>\nendbfchar\n"
+        b"2 beginbfrange\n<0010> <0012> <0061>\n<0020> <0021> [<0041> <0042>]\nendbfrange\n"
+    )
+    assert parse_tounicode(cmap) == {
+        3: " ",
+        4: "fi",
+        0x10: "a",
+        0x11: "b",
+        0x12: "c",
+        0x20: "A",
+        0x21: "B",
+    }
+
+
+def test_edge_numbers_ignore_non_ascii_digits() -> None:
+    from booktoskill.layout import _edge_number
+
+    assert _edge_number("12 Chapter 2. Variables") == ("arabic", 12)
+    assert _edge_number("vii") == ("roman", 7)
+    # Pro Git marks code callouts with circled digits, which str.isdigit accepts
+    assert _edge_number(chr(0x2461) + " callout") is None
+
+
+def test_unattested_breaks_follow_the_books_own_habit(tmp_path: Path) -> None:
+    # A ragged-right book: its only attested break is a real compound, so an
+    # unattested break ("branch-" / "management") keeps its hyphen too.
+    spec = PageSpec()
+    spec.line(700, [("R", "We use a well-")])
+    spec.line(686, [("R", "known workflow here, which is a well-known thing to say, and")])
+    spec.line(672, [("R", "then we discuss branch-")])
+    spec.line(658, [("R", "management in the next part of the chapter.")])
+    blocks, report = build_blocks(read_pdf(write_pdf(tmp_path / "r.pdf", [spec])))
+    text = blocks_text(blocks)
+    assert "well-known workflow" in text and "branch-management" in text
+    assert report.hyphens_kept == 2 and report.hyphen_joins == 0

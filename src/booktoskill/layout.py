@@ -28,7 +28,6 @@ from __future__ import annotations
 import re
 from collections import Counter
 from dataclasses import dataclass, field
-from statistics import median
 
 from booktoskill.pdftext import Line, Page
 
@@ -66,7 +65,6 @@ class Block:
     text: str
     page: int
     size: float = 0.0
-    bold: bool = False
 
 
 @dataclass
@@ -106,7 +104,7 @@ def _edge_number(text: str) -> tuple[str, int] | None:
     if not parts:
         return None
     for token in (parts[0], parts[-1]):
-        if token.isdigit() and len(token) <= 4:
+        if token.isascii() and token.isdigit() and len(token) <= 4:  # not "②"
             return "arabic", int(token)
         roman = roman_to_int(token)
         if roman is not None:
@@ -207,7 +205,8 @@ def _is_heading(line: Line, body: float) -> bool:
 
 def _line_text(line: Line, opts: RepairOptions, code: bool = False) -> str:
     if opts.spacing:
-        return line.text(code=code)
+        # Some producers pad code with no-break spaces; they are plain spaces.
+        return line.text(code=code).replace(chr(0xA0), " ")
     # Without geometric spacing, runs are joined the way a naive consumer of
     # the decoder output would: with a single space between runs.
     return " ".join(r.text for r in line.runs)
@@ -221,6 +220,42 @@ def _page_geometry(lines: list[Line]) -> tuple[float, float]:
     left = Counter(round(ln.x0) for ln in body).most_common(1)[0][0]
     right = max(ln.runs[-1].x_end for ln in body)
     return float(left), right
+
+
+def _paragraph_break(
+    line: Line,
+    text: str,
+    prev_line: Line,
+    prev_text: str,
+    nxt: Line | None,
+    *,
+    gap: float,
+    left: float,
+    prev_right: float,
+    body: float,
+    leading: float,
+) -> bool:
+    """Does ``line`` start a new paragraph after ``prev_line``?"""
+    # First-line indent: this line sits right of both the previous line and the
+    # next one by at most a few ems, the next line is ordinary text, and the
+    # previous line ended a sentence (otherwise it is a hanging indent, such as
+    # the second line of a glossary entry).
+    indented = (
+        nxt is not None
+        and 0.5 * body < line.x0 - nxt.x0 < 3 * body
+        and abs(prev_line.x0 - nxt.x0) < 2
+        and line.x0 > left + 4
+        and prev_text.rstrip().endswith(_SENTENCE_END)
+        and not _BULLET_RE.match(nxt.text())
+    )
+    # A short previous line that ended a sentence closed its paragraph. Its
+    # own page's right edge decides "short": facing pages have different margins.
+    short_prev = (
+        prev_right > 0
+        and prev_line.runs[-1].x_end < prev_right - 3 * body
+        and prev_text.rstrip().endswith(_SENTENCE_END)
+    )
+    return gap > 1.28 * leading or bool(_BULLET_RE.match(text)) or indented or short_prev
 
 
 def build_blocks(
@@ -241,7 +276,11 @@ def build_blocks(
         for a, b in zip(lines, lines[1:], strict=False)
         if abs(a.size - body) < 0.5 and abs(b.size - body) < 0.5 and 0 < a.y - b.y < 3 * body
     ]
-    leading = median(spacings) if spacings else body * 1.2
+    # The most common baseline-to-baseline distance is the leading; a median
+    # would be pulled up by the larger gaps around headings and listings.
+    leading = (
+        Counter(round(s * 2) / 2 for s in spacings).most_common(1)[0][0] if spacings else body * 1.2
+    )
 
     page_lines_offset = pages[0].index if pages else 0
     blocks: list[Block] = []
@@ -255,12 +294,12 @@ def build_blocks(
             return
         page = current[0][0].page
         if current_kind == "code":
-            blocks.append(Block("code", _code_text(current), page, body))
+            blocks.append(Block("code", _code_text(current, leading), page, body))
             report.code_blocks += 1
         elif current_kind == "heading":
             text = " ".join(t for _, t in current)
             size = max(ln.size for ln, _ in current)
-            blocks.append(Block("heading", text, page, size, bold=True))
+            blocks.append(Block("heading", text, page, size))
         else:
             blocks.append(Block("paragraph", _join_lines([t for _, t in current]), page, body))
         current = []
@@ -304,35 +343,21 @@ def build_blocks(
                 if kind == "heading":
                     new = abs(prev_line.size - line.size) > 0.5 or gap > 2.5 * line.size
                 elif kind == "code":
-                    new = gap > 1.8 * leading
+                    # A blank line inside a listing is one extra leading; a
+                    # gap much larger than that is prose or a new listing.
+                    new = gap > 2.6 * leading
                 else:
-                    nxt = lines[i + 1] if i + 1 < len(lines) else None
-                    # First-line indent: this line sits right of both the
-                    # previous line and the next one, by at most a few ems, and
-                    # the next line is ordinary text (not another bullet).
-                    indented = (
-                        nxt is not None
-                        and 0.5 * body < line.x0 - nxt.x0 < 3 * body
-                        and abs(prev_line.x0 - nxt.x0) < 2
-                        and line.x0 > left + 4
-                        # ...and the previous line ended a sentence; otherwise
-                        # this is a hanging indent (a glossary entry's 2nd line).
-                        and prev_text.rstrip().endswith(_SENTENCE_END)
-                        and not _BULLET_RE.match(nxt.text())
-                    )
-                    # The previous line's own page decides whether it was short:
-                    # facing pages have different margins.
-                    prev_right = geometry[prev_line.page - page_lines_offset][1]
-                    short_prev = (
-                        prev_right > 0
-                        and prev_line.runs[-1].x_end < prev_right - 3 * body
-                        and prev_text.rstrip().endswith(_SENTENCE_END)
-                    )
-                    new = (
-                        gap > 1.28 * leading
-                        or bool(_BULLET_RE.match(text))
-                        or indented
-                        or short_prev
+                    new = _paragraph_break(
+                        line,
+                        text,
+                        prev_line,
+                        prev_text,
+                        lines[i + 1] if i + 1 < len(lines) else None,
+                        gap=gap,
+                        left=left,
+                        prev_right=geometry[prev_line.page - page_lines_offset][1],
+                        body=body,
+                        leading=leading,
                     )
             if new:
                 flush()
@@ -354,13 +379,18 @@ def build_blocks(
     return blocks, report
 
 
-def _code_text(lines: list[tuple[Line, str]]) -> str:
+def _code_text(lines: list[tuple[Line, str]], leading: float) -> str:
+    """Code lines with indentation from x offsets and blank lines from y gaps."""
     left = min(ln.x0 for ln, _ in lines)
-    out = []
+    out: list[str] = []
+    prev: Line | None = None
     for line, text in lines:
+        if prev is not None and prev.page == line.page:
+            out.extend([""] * max(0, round((prev.y - line.y) / leading) - 1))
         char_w = line.runs[0].font.text_width("m", line.runs[0].size) or line.size * 0.5
         indent = max(0, round((line.x0 - left) / char_w))
         out.append(" " * indent + text.rstrip())
+        prev = line
     return "\n".join(out)
 
 
@@ -378,6 +408,14 @@ def _join_lines(texts: list[str]) -> str:
 
 
 def _dehyphenate(blocks: list[Block], report: RepairReport) -> None:
+    """Decide, for every word broken at a line end, whether the hyphen is real.
+
+    The book itself is the dictionary. If only the closed-up word occurs
+    elsewhere, join; if only the hyphenated compound does, keep the hyphen.
+    When neither occurs, follow what this book's own attested cases say: a
+    TeX book hyphenates ordinary words at line ends (so join), while a
+    ragged-right book only ever breaks at real compound hyphens (so keep).
+    """
     vocab: Counter[str] = Counter()
     for block in blocks:
         if block.kind == "paragraph":
@@ -385,14 +423,28 @@ def _dehyphenate(blocks: list[Block], report: RepairReport) -> None:
                 vocab[w.lower()] += 1
     pattern = re.compile(r"([A-Za-z]+)-" + _BREAK + r"([A-Za-z]+)")
 
+    def evidence(head: str, tail: str) -> str | None:
+        if tail[:1].isupper():  # "Pro-" / "Git": a name, keep the hyphen
+            return "keep"
+        joined, hyphenated = vocab[(head + tail).lower()], vocab[f"{head}-{tail}".lower()]
+        if joined > hyphenated:
+            return "join"
+        if hyphenated > joined:
+            return "keep"
+        return None
+
+    attested = Counter(
+        e
+        for block in blocks
+        if block.kind == "paragraph"
+        for m in pattern.finditer(block.text)
+        if (e := evidence(m.group(1), m.group(2))) is not None
+    )
+    default = "join" if attested["join"] >= attested["keep"] else "keep"
+
     def fix(m: re.Match[str]) -> str:
         head, tail = m.group(1), m.group(2)
-        joined = (head + tail).lower()
-        hyphenated = f"{head}-{tail}".lower()
-        # Keep the hyphen only when the hyphenated compound occurs elsewhere
-        # in the book and the closed-up word does not; typesetters break far
-        # more words than they break genuine compounds.
-        if vocab[hyphenated] > 0 and vocab[joined] == 0 or tail[:1].isupper():
+        if (evidence(head, tail) or default) == "keep":
             report.hyphens_kept += 1
             return f"{head}-{tail}"
         report.hyphen_joins += 1
@@ -400,7 +452,7 @@ def _dehyphenate(blocks: list[Block], report: RepairReport) -> None:
 
     for block in blocks:
         if block.kind == "paragraph" and _BREAK in block.text:
-            block.text = pattern.sub(fix, block.text).replace(_BREAK, "")
+            block.text = pattern.sub(fix, block.text)
         block.text = block.text.replace(_BREAK, "")
 
 

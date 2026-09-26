@@ -160,3 +160,8 @@ def test_detex() -> None:
     tex = r"a {\bf bold} and \verb|x_1| and ``quote'' \index{k}"
     assert detex(tex) == 'a bold and x_1 and "quote"'
     assert detex(r"50\% of \emph{it}~now % a comment") == "50% of it now"
+
+
+def test_code_block_recovery_compares_dedented_blocks() -> None:
+    ref = ["    # nested in a list item\n    x = 1"]
+    assert code_block_recovery("# nested in a list item\nx = 1", ref)["exact"] == 1.0

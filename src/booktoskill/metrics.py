@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import random
 import re
+import textwrap
 import unicodedata
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
@@ -91,18 +92,19 @@ def _code_lines(text: str) -> str:
 def code_block_recovery(extracted: str, reference_blocks: Sequence[str]) -> dict[str, float]:
     """Share of the reference's multi-line code blocks found verbatim.
 
-    Verbatim means every line, with its leading indentation, in order and
-    contiguous. Reported separately for blocks that contain indentation,
-    which is what a plain text dump loses.
+    Verbatim means every line, with its indentation relative to the block,
+    in order and contiguous (a listing indented as a whole inside a list item
+    is compared dedented). Reported separately for blocks with indentation
+    inside them, which is what a plain text dump loses.
     """
     haystack = _code_lines(extracted)
-    multi = [b for b in reference_blocks if b.strip().count("\n") >= 1]
+    multi = [textwrap.dedent(b).strip("\n") for b in reference_blocks if b.strip().count("\n")]
     indented = [b for b in multi if any(ln.startswith(" ") for ln in b.splitlines()[1:])]
 
     def rate(blocks: Sequence[str]) -> float:
         if not blocks:
             return 0.0
-        return sum(_code_lines(b).strip("\n") in haystack for b in blocks) / len(blocks)
+        return sum(_code_lines(b) in haystack for b in blocks) / len(blocks)
 
     return {
         "blocks": len(multi),

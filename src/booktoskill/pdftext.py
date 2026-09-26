@@ -2,21 +2,22 @@
 
 pypdf decodes the content streams; everything after that is done here. Each
 text-show operation becomes a :class:`Run` with its baseline position, its
-rendered size, whether its font is bold or monospaced, and an estimated width
-(from the font's own ``/Widths`` table), so that the layout-repair stage can
-decide where spaces, code indentation, headings and running headers are.
+rendered size, whether its font is monospaced, and an estimated width (from
+the font's own ``/Widths`` table, read through its ToUnicode map), so that
+the layout-repair stage can decide where spaces, code indentation, headings
+and running headers are.
 """
 
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
+import re
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any
 
 from pypdf import PdfReader
 
-_BOLD_MARKERS = ("bold", "bx", "black", "heavy", "semibold", "demi")
 _MONO_MARKERS = ("tt", "mono", "courier", "code", "consol")
 # Closing punctuation never takes a leading space in prose, whatever the gap.
 _NO_SPACE_BEFORE = (".", ",", ";", ":", "!", "?", ")", "]", "}", chr(0x2019))
@@ -25,11 +26,10 @@ _NO_SPACE_BEFORE = (".", ",", ";", ":", "!", "?", ")", "]", "}", chr(0x2019))
 @dataclass(frozen=True)
 class FontInfo:
     name: str
-    bold: bool
     mono: bool
-    first_char: int
-    widths: tuple[float, ...]
+    char_widths: dict[str, float]  # decoded character -> advance, in 1/1000 em
     avg_width: float
+    family: str = ""  # base name without subset tag or style, e.g. "mplus1mn"
 
     def text_width(self, text: str, size: float) -> float:
         """Width of ``text`` at ``size`` points, from the font's width table.
@@ -44,10 +44,8 @@ class FontInfo:
         for ch in text:
             if ch == " " and not self.mono:
                 total += 200.0
-                continue
-            code = ord(ch) - self.first_char
-            w = self.widths[code] if 0 <= code < len(self.widths) else 0.0
-            total += w if w > 0 else self.avg_width
+            else:
+                total += self.char_widths.get(ch, self.avg_width)
         return total * size / 1000.0
 
 
@@ -59,6 +57,7 @@ class Run:
     font: FontInfo
     text: str
     in_figure: bool = False
+    lead_space: bool = False  # the decoded text began with a space
 
     @property
     def x_end(self) -> float:
@@ -80,20 +79,12 @@ class Line:
         """The size of the line's longest run (superscripts do not count)."""
         return max(self.runs, key=lambda r: len(r.text)).size
 
-    def _char_fraction(self, attr: str) -> float:
-        total = sum(len(r.text.strip()) for r in self.runs)
-        if total == 0:
-            return 0.0
-        hit = sum(len(r.text.strip()) for r in self.runs if getattr(r.font, attr))
-        return hit / total
-
     @property
     def mono_fraction(self) -> float:
-        return self._char_fraction("mono")
-
-    @property
-    def bold_fraction(self) -> float:
-        return self._char_fraction("bold")
+        """Share of the line's characters set in a monospaced font."""
+        total = sum(len(r.text) for r in self.runs)
+        mono = sum(len(r.text) for r in self.runs if r.font.mono)
+        return mono / total if total else 0.0
 
     def text(self, *, space_gap: float = 0.06, code: bool = False) -> str:
         """Join runs, inserting spaces where the horizontal gap says there is one.
@@ -114,7 +105,7 @@ class Line:
                     n = max(0, round(gap / cw))
                     out.append(" " * n)
                 elif (
-                    gap > space_gap * run.size
+                    (gap > space_gap * run.size or run.lead_space)
                     and not out[-1].endswith((" ", "(", "[", "{"))
                     and not run.text.startswith(_NO_SPACE_BEFORE)
                 ):
@@ -132,30 +123,74 @@ class Page:
     lines: list[Line]
 
 
-def _font_info(font: Any, cache: dict[int, FontInfo]) -> FontInfo:
+_HEX_RE = re.compile(rb"<([0-9A-Fa-f]+)>")
+
+
+def _utf16(hexstr: bytes) -> str:
+    raw = bytes.fromhex(hexstr.decode("ascii"))
+    return raw.decode("utf-16-be", errors="ignore")
+
+
+def parse_tounicode(data: bytes) -> dict[int, str]:
+    """Character code -> text, from a ToUnicode CMap (bfchar and bfrange)."""
+    out: dict[int, str] = {}
+    for block in re.findall(rb"beginbfchar(.*?)endbfchar", data, re.S):
+        hexes = _HEX_RE.findall(block)
+        for src, dst in zip(hexes[::2], hexes[1::2], strict=False):
+            out[int(src, 16)] = _utf16(dst)
+    for block in re.findall(rb"beginbfrange(.*?)endbfrange", data, re.S):
+        for line in block.strip().splitlines():
+            hexes = _HEX_RE.findall(line)
+            if len(hexes) < 3:
+                continue
+            lo, hi = int(hexes[0], 16), int(hexes[1], 16)
+            if b"[" in line:  # <lo> <hi> [<d1> <d2> ...]
+                for i, dst in enumerate(hexes[2:]):
+                    out[lo + i] = _utf16(dst)
+            else:  # <lo> <hi> <start>: consecutive code points
+                start = _utf16(hexes[2])
+                if start:
+                    for i in range(hi - lo + 1):
+                        out[lo + i] = start[:-1] + chr(ord(start[-1]) + i)
+    return out
+
+
+def _font_key(font: Any) -> Any:
+    """A stable cache key: the font's object number, or its identity."""
+    ref = getattr(font, "indirect_reference", None)
+    return (ref.idnum, ref.generation) if ref is not None else id(font)
+
+
+def _font_info(font: Any, cache: dict[Any, FontInfo]) -> FontInfo:
     if font is None:
-        return FontInfo("", False, False, 0, (), 500.0)
-    key = id(font)
+        return FontInfo("", False, {}, 500.0)
+    key = _font_key(font)
     if key in cache:
         return cache[key]
     name = str(font.get("/BaseFont", ""))
     style = name.split("+")[-1].lower()
     widths_obj = font.get("/Widths")
-    widths: tuple[float, ...] = ()
-    if widths_obj is not None:
-        widths = tuple(float(w) for w in widths_obj.get_object())
+    widths = [float(w) for w in widths_obj.get_object()] if widths_obj is not None else []
+    first = int(font.get("/FirstChar", 0))
+    # Which character each code draws: the ToUnicode map when there is one
+    # (subsetting producers such as Prawn renumber glyphs), else the code itself.
+    to_unicode = font.get("/ToUnicode")
+    if to_unicode is not None:
+        codes = parse_tounicode(to_unicode.get_object().get_data())
+    else:
+        codes = {first + i: chr(first + i) for i in range(len(widths))}
+    char_widths = {
+        text: widths[code - first]
+        for code, text in codes.items()
+        if len(text) == 1 and 0 <= code - first < len(widths) and widths[code - first] > 0
+    }
     nonzero = [w for w in widths if w > 0]
-    avg = sum(nonzero) / len(nonzero) if nonzero else 500.0
-    # A font whose every glyph has the same advance is monospaced, whatever it
-    # is called; TeX's typewriter fonts declare no FixedPitch flag.
-    uniform = len(nonzero) > 10 and max(nonzero) - min(nonzero) < 0.01 * avg
     info = FontInfo(
         name=name,
-        bold=any(m in style for m in _BOLD_MARKERS),
-        mono=uniform or any(m in style for m in _MONO_MARKERS),
-        first_char=int(font.get("/FirstChar", 0)),
-        widths=widths,
-        avg_width=avg,
+        mono=any(m in style for m in _MONO_MARKERS),  # provisional; see _settle_mono
+        char_widths=char_widths,
+        avg_width=sum(nonzero) / len(nonzero) if nonzero else 500.0,
+        family=style.split("-")[0],
     )
     cache[key] = info
     return info
@@ -181,7 +216,7 @@ class _Collector:
     axis ticks.
     """
 
-    def __init__(self, cache: dict[int, FontInfo]) -> None:
+    def __init__(self, cache: dict[Any, FontInfo]) -> None:
         self.cache = cache
         self.runs: list[Run] = []
         self.depth = 0
@@ -202,11 +237,12 @@ class _Collector:
         x = float(tm[4]) * a + float(tm[5]) * c + e
         y = float(tm[4]) * b + float(tm[5]) * d + f
         scale = abs(float(tm[3]) * d) or abs(float(tm[0]) * a) or 1.0
-        # pypdf sometimes prefixes a run with the space it inferred; the
-        # position already encodes that gap, so it is dropped here and
-        # re-derived from geometry in Line.text().
+        # A leading space is kept as a flag, not as text: some producers
+        # (Prawn) draw real space glyphs at the start of a run, so the run's
+        # position sits on the space and the geometric gap reads as zero.
         info = _font_info(font, self.cache)
-        self.runs.append(Run(x, y, float(size) * scale, info, stripped, self.depth > 0))
+        lead = text[:1] in (" ", chr(0xA0))
+        self.runs.append(Run(x, y, float(size) * scale, info, stripped, self.depth > 0, lead))
 
 
 def read_pdf(path: str | Path, *, line_tolerance: float = 2.5) -> list[Page]:
@@ -215,7 +251,7 @@ def read_pdf(path: str | Path, *, line_tolerance: float = 2.5) -> list[Page]:
     # the width tables used here do not need it, so the noise is suppressed.
     logging.getLogger("pypdf").setLevel(logging.ERROR)
     reader = PdfReader(str(path))
-    cache: dict[int, FontInfo] = {}
+    cache: dict[Any, FontInfo] = {}
     pages: list[Page] = []
     for index, page in enumerate(reader.pages):
         collector = _Collector(cache)
@@ -227,6 +263,44 @@ def read_pdf(path: str | Path, *, line_tolerance: float = 2.5) -> list[Page]:
         box = page.mediabox
         lines = _group_lines(index, collector.runs, line_tolerance)
         pages.append(Page(index, float(box.width), float(box.height), lines))
+    return _settle_mono(pages)
+
+
+def _settle_mono(pages: list[Page]) -> list[Page]:
+    """Decide which fonts are monospaced from the letters they actually draw.
+
+    A font whose drawn letters all share one advance is monospaced, whatever
+    it is called: TeX's typewriter fonts declare no FixedPitch flag. Only
+    drawn letters count, because a subset's width table also lists unused
+    codes at the .notdef width. A font that draws fewer than five distinct
+    letters takes its family's verdict (a per-page subset of a code font may
+    hold only a handful), and failing that its name.
+    """
+    drawn: dict[int, tuple[FontInfo, set[str]]] = {}
+    for page in pages:
+        for line in page.lines:
+            for r in line.runs:
+                drawn.setdefault(id(r.font), (r.font, set()))[1].update(r.text)
+    verdict: dict[int, bool | None] = {}
+    for key, (font, chars) in drawn.items():
+        letters = [font.char_widths.get(c, 0.0) for c in chars if c.isascii() and c.isalpha()]
+        letters = [w for w in letters if w]
+        if len({c for c in chars if c.isascii() and c.isalpha()}) >= 5 and letters:
+            verdict[key] = max(letters) - min(letters) < 0.01 * max(letters)
+        else:
+            verdict[key] = None
+    mono_families = {font.family for key, (font, _) in drawn.items() if verdict[key]}
+    settled: dict[int, FontInfo] = {}
+    for key, (font, _) in drawn.items():
+        v = verdict[key]
+        mono = v if v is not None else (font.family in mono_families or font.mono)
+        settled[key] = font if mono == font.mono else replace(font, mono=mono)
+    for page in pages:
+        for line in page.lines:
+            line.runs = [
+                r if settled[id(r.font)] is r.font else replace(r, font=settled[id(r.font)])
+                for r in line.runs
+            ]
     return pages
 
 

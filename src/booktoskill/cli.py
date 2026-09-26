@@ -72,6 +72,8 @@ def cmd_inspect(args: argparse.Namespace) -> int:
         f"joined ({rep.hyphens_kept} kept); {rep.ligatures_expanded} ligatures; "
         f"{rep.code_blocks} code blocks; {rep.kerning_joins} kerning splits"
     )
+    if rep.removed_examples:
+        print("header/footer lines removed, e.g.: " + " | ".join(rep.removed_examples[:3]))
     for ch in conv.book.chapters:
         label = f"{ch.number:>3} " if ch.number else "    "
         print(f"{label}{ch.title}  (p. {ch.page + 1}-{ch.last_page + 1})")

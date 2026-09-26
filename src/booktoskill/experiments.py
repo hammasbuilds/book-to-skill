@@ -27,7 +27,15 @@ from booktoskill.metrics import (
 )
 from booktoskill.pdftext import Page, read_outline, read_pdf
 from booktoskill.pipeline import Conversion, blocks_text, convert, plain_page_texts
-from booktoskill.references import GoldItem, RefChapter, gold_from_latex, parse_html_edition
+from booktoskill.references import (
+    ASCIIDOCTOR,
+    HEVEA,
+    EditionStyle,
+    GoldItem,
+    RefChapter,
+    gold_from_latex,
+    parse_html_edition,
+)
 from booktoskill.skill import SkillPackage, build_extractive_skill, sentences
 from booktoskill.structure import Book, is_content_chapter
 
@@ -40,11 +48,17 @@ class BookSpec:
     key: str
     title: str
     pdf: Path
-    html_dir: Path
-    tex: Path
+    html: Path  # a folder of hevea pages, or one Asciidoctor file
+    style: EditionStyle
+    tex: Path | None  # LaTeX source with glossaries; None: no question set
 
 
 def book_specs(data_dir: str | Path) -> list[BookSpec]:
+    """Two LaTeX books with question sets, and Pro Git as a non-LaTeX control.
+
+    Pro Git (Asciidoctor PDF on Prawn) is scored on extraction and structure
+    only: it has no glossary, so no definition questions.
+    """
     raw = Path(data_dir) / "raw"
     return [
         BookSpec(
@@ -52,6 +66,7 @@ def book_specs(data_dir: str | Path) -> list[BookSpec]:
             "Think Python 2e",
             raw / "thinkpython2.pdf",
             raw / "html" / "thinkpython2",
+            HEVEA,
             raw / "thinkpython2.tex",
         ),
         BookSpec(
@@ -59,13 +74,16 @@ def book_specs(data_dir: str | Path) -> list[BookSpec]:
             "Think Stats 2e",
             raw / "thinkstats2.pdf",
             raw / "html" / "thinkstats2",
+            HEVEA,
             raw / "thinkstats2.tex",
         ),
+        BookSpec("progit", "Pro Git", raw / "progit.pdf", raw / "progit.html", ASCIIDOCTOR, None),
     ]
 
 
 def check_inputs(specs: list[BookSpec]) -> None:
-    missing = [str(p) for s in specs for p in (s.pdf, s.tex, s.html_dir) if not Path(p).exists()]
+    paths = [p for s in specs for p in (s.pdf, s.tex, s.html) if p is not None]
+    missing = [str(p) for p in paths if not p.exists()]
     if missing:
         raise FileNotFoundError(
             "missing inputs (run scripts/fetch_data.sh first): " + ", ".join(missing)
@@ -113,7 +131,7 @@ def _system_texts(conv: Conversion, ranges: list[tuple[RefChapter, int, int]]) -
 
 
 def extraction_experiment(spec: BookSpec, pages: list[Page]) -> dict:
-    refs = parse_html_edition(spec.html_dir)
+    refs = parse_html_edition(spec.html, spec.style)
     plain = plain_page_texts(spec.pdf)
     outline = read_outline(spec.pdf)
     last_start = max(page for depth, _, page in outline if depth == 0)
@@ -188,7 +206,7 @@ def _structure_scores(chapters: list[tuple[str, list[str]]], refs: list[RefChapt
 
 
 def structure_experiment(spec: BookSpec, conv: Conversion, raw_conv: Conversion) -> dict:
-    refs = parse_html_edition(spec.html_dir)
+    refs = parse_html_edition(spec.html, spec.style)
 
     def detected(book: Book) -> list[tuple[str, list[str]]]:
         return [
@@ -368,6 +386,8 @@ def summarise_retrieval(run: RetrievalRun, base: str = "book_chunks") -> dict:
 
 
 def load_gold(spec: BookSpec) -> tuple[list[GoldItem], dict[str, int]]:
+    if spec.tex is None:
+        raise ValueError(f"{spec.key} has no LaTeX source, so no question set")
     return gold_from_latex(spec.tex.read_text(encoding="utf-8"), spec.key)
 
 
@@ -421,7 +441,53 @@ def code_retention(book: Book, pkg: SkillPackage) -> dict[str, int]:
     return {"book_code_blocks": total, "in_skill": kept}
 
 
+def _skill_stats(conv: Conversion, pkg: SkillPackage) -> dict[str, int]:
+    return {
+        "reference_words": sum(len(t.split()) for t in pkg.references.values()),
+        "skill_md_words": len(pkg.skill_md.split()),
+        "book_words": sum(
+            len(blocks_text(ch.blocks(HOLDOUT)).split())
+            for ch in conv.book.chapters
+            if is_content_chapter(ch)
+        ),
+        **code_retention(conv.book, pkg),
+    }
+
+
+def run_book(spec: BookSpec) -> tuple[dict, list[GoldItem], RetrievalRun | None, dict]:
+    """Every no-model result for one book.
+
+    Returns the book's summary, its questions, its per-question retrieval
+    outcomes (None for a book without a question set) and the evidence
+    threshold counts.
+    """
+    pages = read_pdf(spec.pdf)
+    conv = convert(spec.pdf, title=spec.title, pages=pages)
+    raw_opts = RepairOptions(**{f.name: False for f in fields(RepairOptions)})
+    raw_conv = convert(spec.pdf, raw_opts, title=spec.title, pages=pages)
+    pkg = build_extractive_skill(conv.book, exclude=HOLDOUT)
+    summary: dict = {
+        "extraction": extraction_experiment(spec, pages),
+        "structure": structure_experiment(spec, conv, raw_conv),
+        "repair_report": {k: v for k, v in asdict(conv.report).items() if k != "removed_examples"},
+        "skill": _skill_stats(conv, pkg),
+    }
+    if spec.tex is None:
+        return summary, [], None, {}
+    items, gold_stats = load_gold(spec)
+    items, dropped = filter_to_pdf(items, conv)
+    gold_stats["not_in_pdf_revision"] = dropped
+    gold_stats["questions"] = len(items)
+    corpora = build_corpora(conv, raw_conv, pkg)
+    run = run_retrieval(items, corpora)
+    summary["gold"] = gold_stats
+    summary["retrieval"] = summarise_retrieval(run)
+    summary["random_control_retention_by_seed"] = random_control_retention(items, conv.book, pkg)
+    return summary, items, run, retention_by_threshold(items, corpora)
+
+
 def run_all(data_dir: str | Path, results_dir: str | Path) -> dict:
+    """Run every no-model experiment and write ``results/*.json``."""
     specs = book_specs(data_dir)
     check_inputs(specs)
     results_dir = Path(results_dir)
@@ -431,62 +497,29 @@ def run_all(data_dir: str | Path, results_dir: str | Path) -> dict:
     all_items: list[GoldItem] = []
     sensitivity: dict[str, dict[str, int]] = {}
     for spec in specs:
-        pages = read_pdf(spec.pdf)
-        conv = convert(spec.pdf, title=spec.title, pages=pages)
-        raw_opts = RepairOptions(**{f.name: False for f in fields(RepairOptions)})
-        raw_conv = convert(spec.pdf, raw_opts, title=spec.title, pages=pages)
-        pkg = build_extractive_skill(conv.book, exclude=HOLDOUT)
-
-        items, gold_stats = load_gold(spec)
-        items, dropped = filter_to_pdf(items, conv)
-        gold_stats["not_in_pdf_revision"] = dropped
-        gold_stats["questions"] = len(items)
-        corpora = build_corpora(conv, raw_conv, pkg)
-        run = run_retrieval(items, corpora)
-        pooled.extend(run)
-        for name, counts in retention_by_threshold(items, corpora).items():
-            mine = sensitivity.setdefault(name, dict.fromkeys(counts, 0))
-            for key, value in counts.items():
-                mine[key] += value
-        summary[spec.key] = {
-            "extraction": extraction_experiment(spec, pages),
-            "structure": structure_experiment(spec, conv, raw_conv),
-            "repair_report": {
-                k: v for k, v in asdict(conv.report).items() if k != "removed_examples"
-            },
-            "gold": gold_stats,
-            "skill": {
-                "reference_words": sum(len(t.split()) for t in pkg.references.values()),
-                "skill_md_words": len(pkg.skill_md.split()),
-                "book_words": sum(
-                    len(blocks_text(ch.blocks(HOLDOUT)).split())
-                    for ch in conv.book.chapters
-                    if is_content_chapter(ch)
-                ),
-                **code_retention(conv.book, pkg),
-            },
-            "retrieval": summarise_retrieval(run),
-            "random_control_retention_by_seed": random_control_retention(items, conv.book, pkg),
-        }
+        book, items, run, counts = run_book(spec)
+        summary[spec.key] = book
         all_items.extend(items)
+        if run is not None:
+            pooled.extend(run)
+        for name, row in counts.items():
+            mine = sensitivity.setdefault(name, dict.fromkeys(row, 0))
+            for key, value in row.items():
+                mine[key] += value
+
+    def write(name: str, payload: object) -> None:
+        (results_dir / name).write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
     with (results_dir / "questions.jsonl").open("w", encoding="utf-8") as fh:
         for it in all_items:
             fh.write(json.dumps(asdict(it), ensure_ascii=False) + "\n")
-    for name in ("extraction", "structure", "retrieval"):
-        payload = {k: v[name] for k, v in summary.items()}
-        (results_dir / f"{name}.json").write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    for name in ("extraction", "structure"):
+        write(f"{name}.json", {k: v[name] for k, v in summary.items()})
+    write("retrieval.json", {k: v["retrieval"] for k, v in summary.items() if "retrieval" in v})
     pooled_summary = summarise_retrieval(pooled)
     pooled_summary["evidence_threshold_sensitivity"] = sensitivity
-    (results_dir / "retrieval_pooled.json").write_text(
-        json.dumps(pooled_summary, indent=2), encoding="utf-8"
-    )
-    meta = {
-        k: {
-            key: v[key]
-            for key in ("repair_report", "gold", "skill", "random_control_retention_by_seed")
-        }
-        for k, v in summary.items()
-    }
-    (results_dir / "books.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
+    write("retrieval_pooled.json", pooled_summary)
+    keys = ("repair_report", "gold", "skill", "random_control_retention_by_seed")
+    write("books.json", {k: {key: v[key] for key in keys if key in v} for k, v in summary.items()})
     summary["pooled_retrieval"] = pooled_summary
     return summary
