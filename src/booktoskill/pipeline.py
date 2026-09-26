@@ -21,12 +21,18 @@ class Conversion:
     book: Book
 
 
-def pdf_title(path: str | Path) -> str:
-    """The PDF's own /Title metadata, or the file name when it has none."""
+def pdf_title(path: str | Path, blocks: list[Block]) -> str:
+    """Best available title: /Title metadata, else the largest heading on the
+    first three pages (the title page), else the file name."""
     logging.getLogger("pypdf").setLevel(logging.ERROR)
     meta = PdfReader(str(path)).metadata
-    title = (meta.title if meta else None) or ""
-    return title.strip() or Path(path).stem
+    title = ((meta.title if meta else None) or "").strip()
+    if title:
+        return title
+    front = [b for b in blocks if b.kind == "heading" and b.page < 3]
+    if front:
+        return max(front, key=lambda b: b.size).text.strip()
+    return Path(path).stem
 
 
 def convert(
@@ -42,7 +48,7 @@ def convert(
             raise FileNotFoundError(f"no such PDF: {path}")
         pages = read_pdf(path)
     blocks, report = build_blocks(pages, opts)
-    book = detect_structure(blocks, title or pdf_title(path))
+    book = detect_structure(blocks, title or pdf_title(path, blocks))
     return Conversion(pages, blocks, report, book)
 
 

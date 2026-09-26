@@ -93,3 +93,8 @@ def chunk_markdown(files: dict[str, str], target: int = 200) -> list[Chunk]:
             for i, chunk in enumerate(chunk_pieces(pieces, target)):
                 out.append(Chunk(f"{chapter}/s{s_index}/{i}", chapter, "", chunk))
     return out
+
+
+def whole_files(files: dict[str, str]) -> list[Chunk]:
+    """Each file as a single retrieval unit (``files`` maps chapter -> text)."""
+    return [Chunk(f"{chapter}/file", chapter, "", text) for chapter, text in files.items()]

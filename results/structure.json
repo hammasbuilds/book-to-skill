@@ -1,0 +1,132 @@
+{
+  "thinkpython2": {
+    "reference_chapters": 21,
+    "reference_sections": 217,
+    "font_size_detector": {
+      "chapters": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 21,
+        "predicted": 21,
+        "gold": 21
+      },
+      "sections": {
+        "precision": 0.9954128440366973,
+        "recall": 1.0,
+        "f1": 0.9977011494252873,
+        "tp": 217,
+        "predicted": 218,
+        "gold": 217
+      },
+      "section_parent_accuracy": 1.0
+    },
+    "font_size_detector_without_repairs": {
+      "chapters": {
+        "precision": 0.9047619047619048,
+        "recall": 0.9047619047619048,
+        "f1": 0.9047619047619048,
+        "tp": 19,
+        "predicted": 21,
+        "gold": 21
+      },
+      "sections": {
+        "precision": 0.9591836734693877,
+        "recall": 0.8663594470046083,
+        "f1": 0.910411622276029,
+        "tp": 188,
+        "predicted": 196,
+        "gold": 217
+      },
+      "section_parent_accuracy": 1.0
+    },
+    "pdf_outline": {
+      "chapters": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 21,
+        "predicted": 21,
+        "gold": 21
+      },
+      "sections": {
+        "precision": 0.9954128440366973,
+        "recall": 1.0,
+        "f1": 0.9977011494252873,
+        "tp": 217,
+        "predicted": 218,
+        "gold": 217
+      },
+      "section_parent_accuracy": 1.0
+    },
+    "heading_sizes": {
+      "chapter": 25.0,
+      "section": 14.5
+    }
+  },
+  "thinkstats2": {
+    "reference_chapters": 14,
+    "reference_sections": 141,
+    "font_size_detector": {
+      "chapters": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 14,
+        "predicted": 14,
+        "gold": 14
+      },
+      "sections": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 141,
+        "predicted": 141,
+        "gold": 141
+      },
+      "section_parent_accuracy": 1.0
+    },
+    "font_size_detector_without_repairs": {
+      "chapters": {
+        "precision": 0.9285714285714286,
+        "recall": 0.9285714285714286,
+        "f1": 0.9285714285714286,
+        "tp": 13,
+        "predicted": 14,
+        "gold": 14
+      },
+      "sections": {
+        "precision": 0.9389312977099237,
+        "recall": 0.8723404255319149,
+        "f1": 0.9044117647058824,
+        "tp": 123,
+        "predicted": 131,
+        "gold": 141
+      },
+      "section_parent_accuracy": 1.0
+    },
+    "pdf_outline": {
+      "chapters": {
+        "precision": 0.9333333333333333,
+        "recall": 1.0,
+        "f1": 0.9655172413793104,
+        "tp": 14,
+        "predicted": 15,
+        "gold": 14
+      },
+      "sections": {
+        "precision": 0.986013986013986,
+        "recall": 1.0,
+        "f1": 0.9929577464788732,
+        "tp": 141,
+        "predicted": 143,
+        "gold": 141
+      },
+      "section_parent_accuracy": 1.0
+    },
+    "heading_sizes": {
+      "chapter": 25.0,
+      "section": 17.0
+    }
+  }
+}

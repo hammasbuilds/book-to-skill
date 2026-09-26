@@ -1,0 +1,64 @@
+{
+  "thinkpython2": {
+    "repair_report": {
+      "figure_runs_removed": 230,
+      "header_lines_removed": 221,
+      "page_number_offset": -21,
+      "code_blocks": 681,
+      "hyphen_joins": 278,
+      "hyphens_kept": 9,
+      "ligatures_expanded": 877,
+      "kerning_joins": 5,
+      "body_size": 10.0
+    },
+    "gold": {
+      "glossary_terms": 220,
+      "no_bold_in_body": 36,
+      "not_in_pdf_revision": 0,
+      "questions": 184
+    },
+    "skill": {
+      "reference_words": 13249,
+      "skill_md_words": 502,
+      "book_words": 61687
+    },
+    "random_control_retention_by_seed": [
+      0.2717,
+      0.2826,
+      0.3098,
+      0.2554,
+      0.2935
+    ]
+  },
+  "thinkstats2": {
+    "repair_report": {
+      "figure_runs_removed": 1271,
+      "header_lines_removed": 250,
+      "page_number_offset": -19,
+      "code_blocks": 398,
+      "hyphen_joins": 304,
+      "hyphens_kept": 6,
+      "ligatures_expanded": 904,
+      "kerning_joins": 4,
+      "body_size": 12.0
+    },
+    "gold": {
+      "glossary_terms": 136,
+      "no_bold_in_body": 30,
+      "not_in_pdf_revision": 1,
+      "questions": 105
+    },
+    "skill": {
+      "reference_words": 9277,
+      "skill_md_words": 359,
+      "book_words": 48334
+    },
+    "random_control_retention_by_seed": [
+      0.2667,
+      0.1714,
+      0.1714,
+      0.2095,
+      0.2381
+    ]
+  }
+}

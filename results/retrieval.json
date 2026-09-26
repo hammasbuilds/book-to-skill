@@ -1,0 +1,1148 @@
+{
+  "thinkpython2": {
+    "n_questions": 184,
+    "corpora": {
+      "book_chunks": {
+        "units": 418,
+        "words": 62101,
+        "evidence_retained": {
+          "value": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "term": {
+          "recall@1": {
+            "value": 0.4837,
+            "ci95": [
+              0.4076,
+              0.5598
+            ]
+          },
+          "recall@3": {
+            "value": 0.7663,
+            "ci95": [
+              0.7011,
+              0.8261
+            ]
+          },
+          "recall@5": {
+            "value": 0.8315,
+            "ci95": [
+              0.7717,
+              0.8804
+            ]
+          },
+          "recall@10": {
+            "value": 0.913,
+            "ci95": [
+              0.8696,
+              0.9511
+            ]
+          }
+        },
+        "definition": {
+          "recall@1": {
+            "value": 0.5054,
+            "ci95": [
+              0.4348,
+              0.5815
+            ]
+          },
+          "recall@3": {
+            "value": 0.75,
+            "ci95": [
+              0.6902,
+              0.8098
+            ]
+          },
+          "recall@5": {
+            "value": 0.8152,
+            "ci95": [
+              0.7554,
+              0.8696
+            ]
+          },
+          "recall@10": {
+            "value": 0.8913,
+            "ci95": [
+              0.8478,
+              0.9348
+            ]
+          }
+        }
+      },
+      "book_chunks_no_repair": {
+        "units": 399,
+        "words": 60830,
+        "evidence_retained": {
+          "value": 0.8859,
+          "ci95": [
+            0.8424,
+            0.9293
+          ]
+        },
+        "term": {
+          "recall@1": {
+            "value": 0.4457,
+            "ci95": [
+              0.375,
+              0.5163
+            ]
+          },
+          "recall@3": {
+            "value": 0.6522,
+            "ci95": [
+              0.5815,
+              0.7228
+            ]
+          },
+          "recall@5": {
+            "value": 0.7174,
+            "ci95": [
+              0.6522,
+              0.7826
+            ]
+          },
+          "recall@10": {
+            "value": 0.788,
+            "ci95": [
+              0.7283,
+              0.8478
+            ]
+          }
+        },
+        "definition": {
+          "recall@1": {
+            "value": 0.4185,
+            "ci95": [
+              0.3424,
+              0.4891
+            ]
+          },
+          "recall@3": {
+            "value": 0.6196,
+            "ci95": [
+              0.5543,
+              0.6902
+            ]
+          },
+          "recall@5": {
+            "value": 0.6957,
+            "ci95": [
+              0.6304,
+              0.7609
+            ]
+          },
+          "recall@10": {
+            "value": 0.7609,
+            "ci95": [
+              0.7011,
+              0.8207
+            ]
+          }
+        }
+      },
+      "skill_reference_chunks": {
+        "units": 309,
+        "words": 13249,
+        "evidence_retained": {
+          "value": 0.5272,
+          "ci95": [
+            0.4565,
+            0.6033
+          ]
+        },
+        "term": {
+          "recall@1": {
+            "value": 0.2391,
+            "ci95": [
+              0.1793,
+              0.3043
+            ]
+          },
+          "recall@3": {
+            "value": 0.3696,
+            "ci95": [
+              0.3043,
+              0.4402
+            ]
+          },
+          "recall@5": {
+            "value": 0.4348,
+            "ci95": [
+              0.3641,
+              0.5109
+            ]
+          },
+          "recall@10": {
+            "value": 0.5054,
+            "ci95": [
+              0.4348,
+              0.5761
+            ]
+          }
+        },
+        "definition": {
+          "recall@1": {
+            "value": 0.2283,
+            "ci95": [
+              0.1685,
+              0.288
+            ]
+          },
+          "recall@3": {
+            "value": 0.3424,
+            "ci95": [
+              0.2772,
+              0.413
+            ]
+          },
+          "recall@5": {
+            "value": 0.375,
+            "ci95": [
+              0.3043,
+              0.4457
+            ]
+          },
+          "recall@10": {
+            "value": 0.4457,
+            "ci95": [
+              0.375,
+              0.5163
+            ]
+          }
+        }
+      },
+      "skill_reference_files": {
+        "units": 21,
+        "words": 13249,
+        "evidence_retained": {
+          "value": 0.5272,
+          "ci95": [
+            0.4565,
+            0.6033
+          ]
+        },
+        "term": {
+          "recall@1": {
+            "value": 0.3967,
+            "ci95": [
+              0.3261,
+              0.4728
+            ]
+          },
+          "recall@3": {
+            "value": 0.5054,
+            "ci95": [
+              0.4348,
+              0.5761
+            ]
+          },
+          "recall@5": {
+            "value": 0.5163,
+            "ci95": [
+              0.4457,
+              0.587
+            ]
+          },
+          "recall@10": {
+            "value": 0.5217,
+            "ci95": [
+              0.4511,
+              0.5924
+            ]
+          }
+        },
+        "definition": {
+          "recall@1": {
+            "value": 0.3587,
+            "ci95": [
+              0.288,
+              0.4293
+            ]
+          },
+          "recall@3": {
+            "value": 0.4728,
+            "ci95": [
+              0.4022,
+              0.5435
+            ]
+          },
+          "recall@5": {
+            "value": 0.5054,
+            "ci95": [
+              0.4402,
+              0.5761
+            ]
+          },
+          "recall@10": {
+            "value": 0.5272,
+            "ci95": [
+              0.4565,
+              0.6033
+            ]
+          }
+        }
+      },
+      "skill_without_definitions_files": {
+        "units": 21,
+        "words": 9954,
+        "evidence_retained": {
+          "value": 0.2337,
+          "ci95": [
+            0.1739,
+            0.2989
+          ]
+        },
+        "term": {
+          "recall@1": {
+            "value": 0.1902,
+            "ci95": [
+              0.1359,
+              0.25
+            ]
+          },
+          "recall@3": {
+            "value": 0.2228,
+            "ci95": [
+              0.163,
+              0.2826
+            ]
+          },
+          "recall@5": {
+            "value": 0.2283,
+            "ci95": [
+              0.1685,
+              0.288
+            ]
+          },
+          "recall@10": {
+            "value": 0.2337,
+            "ci95": [
+              0.1739,
+              0.2989
+            ]
+          }
+        },
+        "definition": {
+          "recall@1": {
+            "value": 0.1467,
+            "ci95": [
+              0.0978,
+              0.2011
+            ]
+          },
+          "recall@3": {
+            "value": 0.2228,
+            "ci95": [
+              0.163,
+              0.2826
+            ]
+          },
+          "recall@5": {
+            "value": 0.2228,
+            "ci95": [
+              0.163,
+              0.2826
+            ]
+          },
+          "recall@10": {
+            "value": 0.2337,
+            "ci95": [
+              0.1739,
+              0.2989
+            ]
+          }
+        }
+      },
+      "random_same_budget_files": {
+        "units": 21,
+        "words": 13420,
+        "evidence_retained": {
+          "value": 0.2826,
+          "ci95": [
+            0.2174,
+            0.3478
+          ]
+        },
+        "term": {
+          "recall@1": {
+            "value": 0.1793,
+            "ci95": [
+              0.125,
+              0.2337
+            ]
+          },
+          "recall@3": {
+            "value": 0.25,
+            "ci95": [
+              0.1902,
+              0.3152
+            ]
+          },
+          "recall@5": {
+            "value": 0.2717,
+            "ci95": [
+              0.2065,
+              0.337
+            ]
+          },
+          "recall@10": {
+            "value": 0.2717,
+            "ci95": [
+              0.2065,
+              0.337
+            ]
+          }
+        },
+        "definition": {
+          "recall@1": {
+            "value": 0.1467,
+            "ci95": [
+              0.0978,
+              0.2011
+            ]
+          },
+          "recall@3": {
+            "value": 0.1902,
+            "ci95": [
+              0.1304,
+              0.25
+            ]
+          },
+          "recall@5": {
+            "value": 0.2228,
+            "ci95": [
+              0.163,
+              0.2826
+            ]
+          },
+          "recall@10": {
+            "value": 0.2609,
+            "ci95": [
+              0.1957,
+              0.3261
+            ]
+          }
+        }
+      }
+    },
+    "paired_differences": {
+      "book_chunks_no_repair minus book_chunks / term / recall@1": {
+        "value": -0.038,
+        "ci95": [
+          -0.0978,
+          0.0163
+        ]
+      },
+      "book_chunks_no_repair minus book_chunks / term / recall@5": {
+        "value": -0.1141,
+        "ci95": [
+          -0.1739,
+          -0.0598
+        ]
+      },
+      "book_chunks_no_repair minus book_chunks / definition / recall@1": {
+        "value": -0.087,
+        "ci95": [
+          -0.1467,
+          -0.0326
+        ]
+      },
+      "book_chunks_no_repair minus book_chunks / definition / recall@5": {
+        "value": -0.1196,
+        "ci95": [
+          -0.1739,
+          -0.0652
+        ]
+      },
+      "skill_reference_chunks minus book_chunks / term / recall@1": {
+        "value": -0.2446,
+        "ci95": [
+          -0.3261,
+          -0.163
+        ]
+      },
+      "skill_reference_chunks minus book_chunks / term / recall@5": {
+        "value": -0.3967,
+        "ci95": [
+          -0.4783,
+          -0.3098
+        ]
+      },
+      "skill_reference_chunks minus book_chunks / definition / recall@1": {
+        "value": -0.2772,
+        "ci95": [
+          -0.3587,
+          -0.1957
+        ]
+      },
+      "skill_reference_chunks minus book_chunks / definition / recall@5": {
+        "value": -0.4402,
+        "ci95": [
+          -0.5217,
+          -0.3533
+        ]
+      },
+      "skill_reference_files minus book_chunks / term / recall@1": {
+        "value": -0.087,
+        "ci95": [
+          -0.1848,
+          0.0163
+        ]
+      },
+      "skill_reference_files minus book_chunks / term / recall@5": {
+        "value": -0.3152,
+        "ci95": [
+          -0.4076,
+          -0.2228
+        ]
+      },
+      "skill_reference_files minus book_chunks / definition / recall@1": {
+        "value": -0.1467,
+        "ci95": [
+          -0.2283,
+          -0.0598
+        ]
+      },
+      "skill_reference_files minus book_chunks / definition / recall@5": {
+        "value": -0.3098,
+        "ci95": [
+          -0.3913,
+          -0.2228
+        ]
+      },
+      "skill_without_definitions_files minus book_chunks / term / recall@1": {
+        "value": -0.2935,
+        "ci95": [
+          -0.375,
+          -0.2065
+        ]
+      },
+      "skill_without_definitions_files minus book_chunks / term / recall@5": {
+        "value": -0.6033,
+        "ci95": [
+          -0.6848,
+          -0.5217
+        ]
+      },
+      "skill_without_definitions_files minus book_chunks / definition / recall@1": {
+        "value": -0.3587,
+        "ci95": [
+          -0.4348,
+          -0.2826
+        ]
+      },
+      "skill_without_definitions_files minus book_chunks / definition / recall@5": {
+        "value": -0.5924,
+        "ci95": [
+          -0.6739,
+          -0.5109
+        ]
+      },
+      "random_same_budget_files minus book_chunks / term / recall@1": {
+        "value": -0.3043,
+        "ci95": [
+          -0.3859,
+          -0.2174
+        ]
+      },
+      "random_same_budget_files minus book_chunks / term / recall@5": {
+        "value": -0.5598,
+        "ci95": [
+          -0.6413,
+          -0.4674
+        ]
+      },
+      "random_same_budget_files minus book_chunks / definition / recall@1": {
+        "value": -0.3587,
+        "ci95": [
+          -0.4511,
+          -0.2772
+        ]
+      },
+      "random_same_budget_files minus book_chunks / definition / recall@5": {
+        "value": -0.5924,
+        "ci95": [
+          -0.6739,
+          -0.5109
+        ]
+      }
+    }
+  },
+  "thinkstats2": {
+    "n_questions": 105,
+    "corpora": {
+      "book_chunks": {
+        "units": 327,
+        "words": 48588,
+        "evidence_retained": {
+          "value": 1.0,
+          "ci95": [
+            1.0,
+            1.0
+          ]
+        },
+        "term": {
+          "recall@1": {
+            "value": 0.5429,
+            "ci95": [
+              0.4476,
+              0.6381
+            ]
+          },
+          "recall@3": {
+            "value": 0.7333,
+            "ci95": [
+              0.6476,
+              0.819
+            ]
+          },
+          "recall@5": {
+            "value": 0.8476,
+            "ci95": [
+              0.7714,
+              0.9143
+            ]
+          },
+          "recall@10": {
+            "value": 0.9143,
+            "ci95": [
+              0.8571,
+              0.9619
+            ]
+          }
+        },
+        "definition": {
+          "recall@1": {
+            "value": 0.5524,
+            "ci95": [
+              0.4476,
+              0.6476
+            ]
+          },
+          "recall@3": {
+            "value": 0.6952,
+            "ci95": [
+              0.6,
+              0.781
+            ]
+          },
+          "recall@5": {
+            "value": 0.7905,
+            "ci95": [
+              0.7048,
+              0.8571
+            ]
+          },
+          "recall@10": {
+            "value": 0.8476,
+            "ci95": [
+              0.7714,
+              0.9143
+            ]
+          }
+        }
+      },
+      "book_chunks_no_repair": {
+        "units": 319,
+        "words": 51249,
+        "evidence_retained": {
+          "value": 0.9238,
+          "ci95": [
+            0.8762,
+            0.9714
+          ]
+        },
+        "term": {
+          "recall@1": {
+            "value": 0.4952,
+            "ci95": [
+              0.4,
+              0.5905
+            ]
+          },
+          "recall@3": {
+            "value": 0.6571,
+            "ci95": [
+              0.5619,
+              0.7429
+            ]
+          },
+          "recall@5": {
+            "value": 0.7333,
+            "ci95": [
+              0.6476,
+              0.8095
+            ]
+          },
+          "recall@10": {
+            "value": 0.8286,
+            "ci95": [
+              0.7524,
+              0.8952
+            ]
+          }
+        },
+        "definition": {
+          "recall@1": {
+            "value": 0.4571,
+            "ci95": [
+              0.3524,
+              0.5524
+            ]
+          },
+          "recall@3": {
+            "value": 0.619,
+            "ci95": [
+              0.5238,
+              0.7048
+            ]
+          },
+          "recall@5": {
+            "value": 0.6857,
+            "ci95": [
+              0.5905,
+              0.7714
+            ]
+          },
+          "recall@10": {
+            "value": 0.7905,
+            "ci95": [
+              0.7048,
+              0.8667
+            ]
+          }
+        }
+      },
+      "skill_reference_chunks": {
+        "units": 204,
+        "words": 9277,
+        "evidence_retained": {
+          "value": 0.5143,
+          "ci95": [
+            0.419,
+            0.6095
+          ]
+        },
+        "term": {
+          "recall@1": {
+            "value": 0.2,
+            "ci95": [
+              0.1238,
+              0.2762
+            ]
+          },
+          "recall@3": {
+            "value": 0.3333,
+            "ci95": [
+              0.2476,
+              0.4286
+            ]
+          },
+          "recall@5": {
+            "value": 0.4286,
+            "ci95": [
+              0.3333,
+              0.5238
+            ]
+          },
+          "recall@10": {
+            "value": 0.4857,
+            "ci95": [
+              0.381,
+              0.581
+            ]
+          }
+        },
+        "definition": {
+          "recall@1": {
+            "value": 0.1905,
+            "ci95": [
+              0.1143,
+              0.2667
+            ]
+          },
+          "recall@3": {
+            "value": 0.2857,
+            "ci95": [
+              0.2,
+              0.3714
+            ]
+          },
+          "recall@5": {
+            "value": 0.3714,
+            "ci95": [
+              0.2762,
+              0.4571
+            ]
+          },
+          "recall@10": {
+            "value": 0.4095,
+            "ci95": [
+              0.3143,
+              0.5048
+            ]
+          }
+        }
+      },
+      "skill_reference_files": {
+        "units": 14,
+        "words": 9277,
+        "evidence_retained": {
+          "value": 0.5143,
+          "ci95": [
+            0.419,
+            0.6095
+          ]
+        },
+        "term": {
+          "recall@1": {
+            "value": 0.4571,
+            "ci95": [
+              0.3619,
+              0.5524
+            ]
+          },
+          "recall@3": {
+            "value": 0.5048,
+            "ci95": [
+              0.4095,
+              0.6
+            ]
+          },
+          "recall@5": {
+            "value": 0.5143,
+            "ci95": [
+              0.419,
+              0.6095
+            ]
+          },
+          "recall@10": {
+            "value": 0.5143,
+            "ci95": [
+              0.419,
+              0.6095
+            ]
+          }
+        },
+        "definition": {
+          "recall@1": {
+            "value": 0.3333,
+            "ci95": [
+              0.2381,
+              0.4286
+            ]
+          },
+          "recall@3": {
+            "value": 0.4381,
+            "ci95": [
+              0.3429,
+              0.5333
+            ]
+          },
+          "recall@5": {
+            "value": 0.4952,
+            "ci95": [
+              0.4,
+              0.5905
+            ]
+          },
+          "recall@10": {
+            "value": 0.5143,
+            "ci95": [
+              0.419,
+              0.6095
+            ]
+          }
+        }
+      },
+      "skill_without_definitions_files": {
+        "units": 14,
+        "words": 7016,
+        "evidence_retained": {
+          "value": 0.1905,
+          "ci95": [
+            0.1238,
+            0.2667
+          ]
+        },
+        "term": {
+          "recall@1": {
+            "value": 0.1619,
+            "ci95": [
+              0.0952,
+              0.2381
+            ]
+          },
+          "recall@3": {
+            "value": 0.181,
+            "ci95": [
+              0.1143,
+              0.2667
+            ]
+          },
+          "recall@5": {
+            "value": 0.1905,
+            "ci95": [
+              0.1238,
+              0.2667
+            ]
+          },
+          "recall@10": {
+            "value": 0.1905,
+            "ci95": [
+              0.1238,
+              0.2667
+            ]
+          }
+        },
+        "definition": {
+          "recall@1": {
+            "value": 0.1524,
+            "ci95": [
+              0.0857,
+              0.219
+            ]
+          },
+          "recall@3": {
+            "value": 0.1619,
+            "ci95": [
+              0.0952,
+              0.2381
+            ]
+          },
+          "recall@5": {
+            "value": 0.1714,
+            "ci95": [
+              0.1048,
+              0.2476
+            ]
+          },
+          "recall@10": {
+            "value": 0.1905,
+            "ci95": [
+              0.1238,
+              0.2667
+            ]
+          }
+        }
+      },
+      "random_same_budget_files": {
+        "units": 14,
+        "words": 9437,
+        "evidence_retained": {
+          "value": 0.2667,
+          "ci95": [
+            0.181,
+            0.3524
+          ]
+        },
+        "term": {
+          "recall@1": {
+            "value": 0.2381,
+            "ci95": [
+              0.1524,
+              0.3238
+            ]
+          },
+          "recall@3": {
+            "value": 0.2667,
+            "ci95": [
+              0.181,
+              0.3524
+            ]
+          },
+          "recall@5": {
+            "value": 0.2667,
+            "ci95": [
+              0.181,
+              0.3524
+            ]
+          },
+          "recall@10": {
+            "value": 0.2667,
+            "ci95": [
+              0.181,
+              0.3524
+            ]
+          }
+        },
+        "definition": {
+          "recall@1": {
+            "value": 0.1714,
+            "ci95": [
+              0.1048,
+              0.2476
+            ]
+          },
+          "recall@3": {
+            "value": 0.2095,
+            "ci95": [
+              0.1333,
+              0.2857
+            ]
+          },
+          "recall@5": {
+            "value": 0.219,
+            "ci95": [
+              0.1429,
+              0.3048
+            ]
+          },
+          "recall@10": {
+            "value": 0.2381,
+            "ci95": [
+              0.1619,
+              0.3238
+            ]
+          }
+        }
+      }
+    },
+    "paired_differences": {
+      "book_chunks_no_repair minus book_chunks / term / recall@1": {
+        "value": -0.0476,
+        "ci95": [
+          -0.1238,
+          0.0286
+        ]
+      },
+      "book_chunks_no_repair minus book_chunks / term / recall@5": {
+        "value": -0.1143,
+        "ci95": [
+          -0.1905,
+          -0.0476
+        ]
+      },
+      "book_chunks_no_repair minus book_chunks / definition / recall@1": {
+        "value": -0.0952,
+        "ci95": [
+          -0.1619,
+          -0.0381
+        ]
+      },
+      "book_chunks_no_repair minus book_chunks / definition / recall@5": {
+        "value": -0.1048,
+        "ci95": [
+          -0.181,
+          -0.0381
+        ]
+      },
+      "skill_reference_chunks minus book_chunks / term / recall@1": {
+        "value": -0.3429,
+        "ci95": [
+          -0.4476,
+          -0.2286
+        ]
+      },
+      "skill_reference_chunks minus book_chunks / term / recall@5": {
+        "value": -0.419,
+        "ci95": [
+          -0.5333,
+          -0.2952
+        ]
+      },
+      "skill_reference_chunks minus book_chunks / definition / recall@1": {
+        "value": -0.3619,
+        "ci95": [
+          -0.4762,
+          -0.2476
+        ]
+      },
+      "skill_reference_chunks minus book_chunks / definition / recall@5": {
+        "value": -0.419,
+        "ci95": [
+          -0.5333,
+          -0.3048
+        ]
+      },
+      "skill_reference_files minus book_chunks / term / recall@1": {
+        "value": -0.0857,
+        "ci95": [
+          -0.2286,
+          0.0571
+        ]
+      },
+      "skill_reference_files minus book_chunks / term / recall@5": {
+        "value": -0.3333,
+        "ci95": [
+          -0.4667,
+          -0.2
+        ]
+      },
+      "skill_reference_files minus book_chunks / definition / recall@1": {
+        "value": -0.219,
+        "ci95": [
+          -0.3524,
+          -0.0857
+        ]
+      },
+      "skill_reference_files minus book_chunks / definition / recall@5": {
+        "value": -0.2952,
+        "ci95": [
+          -0.419,
+          -0.1714
+        ]
+      },
+      "skill_without_definitions_files minus book_chunks / term / recall@1": {
+        "value": -0.381,
+        "ci95": [
+          -0.4952,
+          -0.2571
+        ]
+      },
+      "skill_without_definitions_files minus book_chunks / term / recall@5": {
+        "value": -0.6571,
+        "ci95": [
+          -0.7619,
+          -0.5429
+        ]
+      },
+      "skill_without_definitions_files minus book_chunks / definition / recall@1": {
+        "value": -0.4,
+        "ci95": [
+          -0.5143,
+          -0.2762
+        ]
+      },
+      "skill_without_definitions_files minus book_chunks / definition / recall@5": {
+        "value": -0.619,
+        "ci95": [
+          -0.7143,
+          -0.5143
+        ]
+      },
+      "random_same_budget_files minus book_chunks / term / recall@1": {
+        "value": -0.3048,
+        "ci95": [
+          -0.4286,
+          -0.181
+        ]
+      },
+      "random_same_budget_files minus book_chunks / term / recall@5": {
+        "value": -0.581,
+        "ci95": [
+          -0.7048,
+          -0.4667
+        ]
+      },
+      "random_same_budget_files minus book_chunks / definition / recall@1": {
+        "value": -0.381,
+        "ci95": [
+          -0.5048,
+          -0.2381
+        ]
+      },
+      "random_same_budget_files minus book_chunks / definition / recall@5": {
+        "value": -0.5714,
+        "ci95": [
+          -0.6857,
+          -0.4476
+        ]
+      }
+    }
+  }
+}

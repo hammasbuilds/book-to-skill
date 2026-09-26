@@ -12,13 +12,14 @@ from dataclasses import asdict, dataclass, fields, replace
 from pathlib import Path
 
 from booktoskill.bm25 import BM25
-from booktoskill.chunking import Chunk, chunk_book, chunk_markdown
+from booktoskill.chunking import Chunk, chunk_book, chunk_markdown, whole_files
 from booktoskill.layout import RepairOptions
 from booktoskill.metrics import (
     bootstrap_ci,
     code_block_recovery,
     contains_evidence,
     defect_counts,
+    evidence_coverage,
     fidelity,
     prf,
     title_key,
@@ -261,16 +262,13 @@ def build_corpora(conv: Conversion, raw_conv: Conversion, pkg: SkillPackage) -> 
     no_defs = build_extractive_skill(conv.book, exclude=HOLDOUT, max_definitions=0)
     random_refs = random_budget_references(conv.book, pkg, seed=0)
 
-    def whole(files: dict[str, str]) -> list[Chunk]:
-        return [Chunk(f"{ch}/file", ch, "", text) for ch, text in files.items()]
-
     return [
         Corpus("book_chunks", chunk_book(conv.book, 200, HOLDOUT)),
         Corpus("book_chunks_no_repair", chunk_book(raw_conv.book, 200, HOLDOUT)),
         Corpus("skill_reference_chunks", chunk_markdown(refs, 200)),
-        Corpus("skill_reference_files", whole(refs)),
-        Corpus("skill_without_definitions_files", whole(no_defs.reference_by_chapter())),
-        Corpus("random_same_budget_files", whole(random_refs)),
+        Corpus("skill_reference_files", whole_files(refs)),
+        Corpus("skill_without_definitions_files", whole_files(no_defs.reference_by_chapter())),
+        Corpus("random_same_budget_files", whole_files(random_refs)),
     ]
 
 
@@ -390,6 +388,39 @@ def filter_to_pdf(items: list[GoldItem], conv: Conversion) -> tuple[list[GoldIte
     return kept, len(items) - len(kept)
 
 
+def retention_by_threshold(
+    items: list[GoldItem], corpora: list[Corpus], thresholds: tuple[float, ...] = (0.4, 0.6, 0.8)
+) -> dict[str, dict[str, int]]:
+    """How many gold sentences each corpus keeps, at several match thresholds.
+
+    The headline uses 0.6 of the sentence's word trigrams; this shows the
+    comparison between corpora does not hinge on that choice.
+    """
+    out: dict[str, dict[str, int]] = {}
+    for corpus in corpora:
+        best = [
+            max((evidence_coverage(u.text, it.gold_sentence) for u in corpus.units), default=0.0)
+            for it in items
+        ]
+        out[corpus.name] = {f">={t}": sum(b >= t for b in best) for t in thresholds}
+        out[corpus.name]["n"] = len(items)
+    return out
+
+
+def code_retention(book: Book, pkg: SkillPackage) -> dict[str, int]:
+    """Multi-line code blocks of the book that appear verbatim in the skill."""
+    refs = pkg.reference_by_chapter()
+    total = kept = 0
+    for ch in book.chapters:
+        if ch.number not in refs:
+            continue
+        for b in ch.blocks(HOLDOUT):
+            if b.kind == "code" and "\n" in b.text:
+                total += 1
+                kept += b.text in refs[ch.number]
+    return {"book_code_blocks": total, "in_skill": kept}
+
+
 def run_all(data_dir: str | Path, results_dir: str | Path) -> dict:
     specs = book_specs(data_dir)
     check_inputs(specs)
@@ -398,6 +429,7 @@ def run_all(data_dir: str | Path, results_dir: str | Path) -> dict:
     summary: dict = {}
     pooled = RetrievalRun({}, {}, {})
     all_items: list[GoldItem] = []
+    sensitivity: dict[str, dict[str, int]] = {}
     for spec in specs:
         pages = read_pdf(spec.pdf)
         conv = convert(spec.pdf, title=spec.title, pages=pages)
@@ -409,8 +441,13 @@ def run_all(data_dir: str | Path, results_dir: str | Path) -> dict:
         items, dropped = filter_to_pdf(items, conv)
         gold_stats["not_in_pdf_revision"] = dropped
         gold_stats["questions"] = len(items)
-        run = run_retrieval(items, build_corpora(conv, raw_conv, pkg))
+        corpora = build_corpora(conv, raw_conv, pkg)
+        run = run_retrieval(items, corpora)
         pooled.extend(run)
+        for name, counts in retention_by_threshold(items, corpora).items():
+            mine = sensitivity.setdefault(name, dict.fromkeys(counts, 0))
+            for key, value in counts.items():
+                mine[key] += value
         summary[spec.key] = {
             "extraction": extraction_experiment(spec, pages),
             "structure": structure_experiment(spec, conv, raw_conv),
@@ -426,6 +463,7 @@ def run_all(data_dir: str | Path, results_dir: str | Path) -> dict:
                     for ch in conv.book.chapters
                     if is_content_chapter(ch)
                 ),
+                **code_retention(conv.book, pkg),
             },
             "retrieval": summarise_retrieval(run),
             "random_control_retention_by_seed": random_control_retention(items, conv.book, pkg),
@@ -438,6 +476,7 @@ def run_all(data_dir: str | Path, results_dir: str | Path) -> dict:
         payload = {k: v[name] for k, v in summary.items()}
         (results_dir / f"{name}.json").write_text(json.dumps(payload, indent=2), encoding="utf-8")
     pooled_summary = summarise_retrieval(pooled)
+    pooled_summary["evidence_threshold_sensitivity"] = sensitivity
     (results_dir / "retrieval_pooled.json").write_text(
         json.dumps(pooled_summary, indent=2), encoding="utf-8"
     )
