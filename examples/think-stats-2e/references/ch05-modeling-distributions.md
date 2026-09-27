@@ -4,7 +4,7 @@ Source pages 77-93 of the PDF.
 
 ## When to use
 
-Open this file for questions about: pareto, analytic, normal probability, scale, lognormal, model, exponential, empirical.
+Open this file for questions about: pareto, scale, analytic, lognormal, normal probability, exponential distribution, model, empirical.
 
 ## Sections
 
@@ -41,10 +41,6 @@ At the beginning of this chapter, I said that many real world phenomena can be m
 ### 5.8 Exercises
 
 For the following exercises, you can start with chap05ex.ipynb. My solution is in chap05soln.ipynb.
-
-### 5.9 Glossary
-
-• empirical distribution: The distribution of values in a sample.
 
 ## Key definitions
 

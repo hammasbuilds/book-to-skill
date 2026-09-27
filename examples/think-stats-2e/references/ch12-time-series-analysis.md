@@ -4,7 +4,7 @@ Source pages 193-214 of the PDF.
 
 ## When to use
 
-Open this file for questions about: time series, price, daily, quality, moving average, trend, medium, cannabis.
+Open this file for questions about: time series, price, daily, quality, trend, medium, cannabis, moving.
 
 ## Sections
 
@@ -49,10 +49,6 @@ Time series analysis is a big topic; this chapter has only scratched the surface
 ### 12.10 Exercises
 
 My solution to these exercises is in chap12soln.py.
-
-### 12.11 Glossary
-
-• time series: A dataset where each value is associated with a timestamp, often a series of measurements and the times they were collected.
 
 ## Key definitions
 

@@ -4,7 +4,7 @@ Source pages 173-191 of the PDF.
 
 ## When to use
 
-Open this file for questions about: logistic regression, dependent variable, explanatory, isfirst, model, odds, agepreg, race.
+Open this file for questions about: logistic regression, explanatory, dependent variable, isfirst, model, odds, agepreg, race.
 
 ## Sections
 
@@ -49,10 +49,6 @@ In the office pool scenario, we are most interested in the accuracy of the model
 ### 11.10 Exercises
 
 My solution to these exercises is in chap11soln.ipynb.
-
-### 11.11 Glossary
-
-• regression: One of several related processes for estimating parameters that fit a model to data.
 
 ## Key definitions
 

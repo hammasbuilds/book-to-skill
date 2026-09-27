@@ -4,7 +4,7 @@ Source pages 223-232 of the PDF.
 
 ## When to use
 
-Open this file for questions about: order growth, linear, constant time, algorithm, resize, linearmap, leading term, analysis.
+Open this file for questions about: linear, order growth, constant time, algorithm, resize, linearmap, sort, performance.
 
 ## Sections
 
@@ -25,10 +25,6 @@ A search is an algorithm that takes a collection and a target item and determine
 ### B.4 Hashtables
 
 To explain how hashtables work and why their performance is so good, I start with a simple implementation of a map and gradually improve it until it’s a hashtable.
-
-### B.5 Glossary
-
-analysis of algorithms: A way to compare algorithms in terms of their run time and/or space requirements.
 
 ## Key definitions
 

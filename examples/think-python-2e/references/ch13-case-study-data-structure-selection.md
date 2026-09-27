@@ -4,7 +4,7 @@ Source pages 147-157 of the PDF.
 
 ## When to use
 
-Open this file for questions about: random, prefix, histogram, emma, suffixes, markov, rubber duck, frequency.
+Open this file for questions about: random, prefix, histogram, emma, suffixes, markov analysis, frequency, words.
 
 ## Sections
 
@@ -49,10 +49,6 @@ Using Markov analysis to generate random text is fun, but there is also a point 
 ### 13.10 Debugging
 
 When you are debugging a program, and especially if you are working on a hard bug, there are five things to try:
-
-### 13.11 Glossary
-
-deterministic: Pertaining to a program that does the same thing each time it runs, given the same inputs.
 
 ### 13.12 Exercises
 

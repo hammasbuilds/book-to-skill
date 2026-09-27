@@ -4,7 +4,7 @@ Source pages 61-71 of the PDF.
 
 ## When to use
 
-Open this file for questions about: koch curve, countdown, conditional, branches, floor division, fermat, recursion, triangle.
+Open this file for questions about: koch curve, execution countdown, fermat, form triangle, sticks, floor division, two branches, recursion.
 
 ## Sections
 
@@ -57,10 +57,6 @@ The programs we have written so far accept no input from the user. They just do 
 ### 5.12 Debugging
 
 When a syntax or runtime error occurs, the error message contains a lot of information, but it can be overwhelming. The most useful parts are usually:
-
-### 5.13 Glossary
-
-floor division: An operator, denoted //, that divides two numbers and rounds down (toward negative infinity) to an integer.
 
 ### 5.14 Exercises
 

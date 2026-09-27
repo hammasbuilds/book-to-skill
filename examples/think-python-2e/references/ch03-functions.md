@@ -4,7 +4,7 @@ Source pages 39-50 of the PDF.
 
 ## When to use
 
-Open this file for questions about: print twice, repeat lyrics, function definition, bruce, radians, sequence statements, module object, quotes.
+Open this file for questions about: print twice, repeat lyrics, bruce, radians, new function, quotes, math, four.
 
 ## Sections
 
@@ -57,10 +57,6 @@ It may not be clear why it is worth the trouble to divide a program into functio
 ### 3.12 Debugging
 
 One of the most important skills you will acquire is debugging. Although it can be frustrating, debugging is one of the most intellectually rich, challenging, and interesting parts of programming.
-
-### 3.13 Glossary
-
-function: A named sequence of statements that performs some useful operation. Functions may or may not take arguments and may or may not produce a result.
 
 ### 3.14 Exercises
 

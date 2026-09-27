@@ -4,7 +4,7 @@ Source pages 105-110 of the PDF.
 
 ## When to use
 
-Open this file for questions about: solved problem, return false, forbidden, file object, required letters, palindromic, words, previously.
+Open this file for questions about: solved problem, return false, forbidden, required letters, palindromic, words, file object, cartalk.
 
 ## Sections
 
@@ -29,10 +29,6 @@ I wrote the functions in the previous section with for loops because I only need
 ### 9.5 Debugging
 
 Testing programs is hard. The functions in this chapter are relatively easy to test because you can check the results by hand.
-
-### 9.6 Glossary
-
-file object: A value that represents an open file.
 
 ### 9.7 Exercises
 

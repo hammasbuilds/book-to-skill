@@ -4,7 +4,7 @@ Source pages 159-168 of the PDF.
 
 ## When to use
 
-Open this file for questions about: current directory, database, path, files, format, permanent storage, pickle, imported.
+Open this file for questions about: database, current directory, files, path, format, pickle, permanent, imported.
 
 ## Sections
 
@@ -49,10 +49,6 @@ Any file that contains Python code can be imported as a module. For example, sup
 ### 14.10 Debugging
 
 When you are reading and writing files, you might run into problems with whitespace. These errors can be hard to debug because spaces, tabs and newlines are normally invisible:
-
-### 14.11 Glossary
-
-persistent: Pertaining to a program that runs indefinitely and keeps at least some of its data in permanent storage.
 
 ### 14.12 Exercises
 

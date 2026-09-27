@@ -4,7 +4,7 @@ Source pages 85-92 of the PDF.
 
 ## When to use
 
-Open this file for questions about: estimate, equality, square root, loop, update, prove, reassignment, eval.
+Open this file for questions about: estimate, equality, square root, loop, prove, eval, break statement, condition.
 
 ## Sections
 
@@ -37,10 +37,6 @@ Newton’s method is an example of an algorithm: it is a mechanical process for 
 ### 7.7 Debugging
 
 As you start writing bigger programs, you might find yourself spending more time debugging. More code means more chances to make an error and more places for bugs to hide.
-
-### 7.8 Glossary
-
-reassignment: Assigning a new value to a variable that already exists.
 
 ### 7.9 Exercises
 

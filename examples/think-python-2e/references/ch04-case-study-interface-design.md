@@ -4,7 +4,7 @@ Source pages 51-60 of the PDF.
 
 ## When to use
 
-Open this file for questions about: polygon, turtle, circle, segments, angle, interface, window, polyline.
+Open this file for questions about: polygon, turtle, circle, segments, angle, window, polyline, circumference.
 
 ## Sections
 
@@ -49,10 +49,6 @@ A docstring is a string at the beginning of a function that explains the interfa
 ### 4.10 Debugging
 
 An interface is like a contract between a function and a caller. The caller agrees to provide certain parameters and the function agrees to do certain work.
-
-### 4.11 Glossary
-
-method: A function that is associated with an object and called using dot notation.
 
 ### 4.12 Exercises
 

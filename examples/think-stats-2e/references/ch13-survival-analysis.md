@@ -4,7 +4,7 @@ Source pages 215-235 of the PDF.
 
 ## When to use
 
-Open this file for questions about: survival, curve, married, hazard function, lifetimes, cohort, remaining, marriage.
+Open this file for questions about: survival, curve, married, hazard function, lifetimes, marriage, cohort, remaining.
 
 ## Sections
 
@@ -53,10 +53,6 @@ Given a survival curve, we can compute the expected remaining lifetime as a func
 ### 13.11 Exercises
 
 My solution to this exercise is in chap13soln.py.
-
-### 13.12 Glossary
-
-• survival analysis: A set of methods for describing and predicting lifetimes, or more generally time until an event occurs.
 
 ## Key definitions
 

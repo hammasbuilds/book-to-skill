@@ -4,7 +4,7 @@ Source pages 137-146 of the PDF.
 
 ## When to use
 
-Open this file for questions about: tuple assignment, zip object, telephone, structshape, reducible, iterator, lists, sequences.
+Open this file for questions about: tuple assignment, sequences, telephone, structshape, reducible, lists, iterator, longest.
 
 ## Sections
 
@@ -41,10 +41,6 @@ I have focused on lists of tuples, but almost all of the examples in this chapte
 ### 12.8 Debugging
 
 Lists, dictionaries and tuples are examples of data structures; in this chapter we are starting to see compound data structures, like lists of tuples, or dictionaries that contain tuples as keys and lists as values. Compound data structures are useful, but they are prone to what I call shape errors; that is, errors caused when a data structure has the wrong type, size, or structure.
-
-### 12.9 Glossary
-
-tuple: An immutable sequence of elements.
 
 ### 12.10 Exercises
 

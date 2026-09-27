@@ -4,7 +4,7 @@ Source pages 31-37 of the PDF.
 
 ## When to use
 
-Open this file for questions about: script, interactive mode, spam, precedence, illegal, semantic, syntax error, keywords.
+Open this file for questions about: script, interactive mode, spam, precedence, illegal, semantic, comments, syntax error.
 
 ## Sections
 
@@ -42,10 +42,6 @@ As programs get bigger and more complicated, they get more difficult to read. Fo
 
 Three kinds of errors can occur in a program: syntax errors, runtime errors, and semantic errors. It is useful to distinguish between them in order to track them down more quickly.
 
-### 2.9 Glossary
-
-variable: A name that refers to a value.
-
 ### 2.10 Exercises
 
 Exercise 2.1. Repeating my advice from the previous chapter, whenever you learn a new feature, you should try it out in interactive mode and make errors on purpose to see what goes wrong.
@@ -62,8 +58,6 @@ Exercise 2.1. Repeating my advice from the previous chapter, whenever you learn 
 - On the other hand, there is a significant way in which string concatenation and repetition are different from integer addition and multiplication.
 - These notes are called comments, and they start with the # symbol:
 - Syntax error: “Syntax” refers to the structure of a program and the rules about that structure.
-- variable: A name that refers to a value.
-- state diagram: A graphical representation of a set of variables and the values they refer to.
 
 ## Worked examples
 

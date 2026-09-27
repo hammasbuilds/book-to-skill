@@ -4,7 +4,7 @@ Source pages 125-136 of the PDF.
 
 ## When to use
 
-Open this file for questions about: global variable, dictionary, fibonacci, lookup, key-value, keys, homophone, graph.
+Open this file for questions about: dictionary, global variable, fibonacci, lookup, homophone, keys, key-value, graph.
 
 ## Sections
 
@@ -41,10 +41,6 @@ In the previous example, known is created outside the function, so it belongs to
 ### 11.8 Debugging
 
 As you work with bigger datasets it can become unwieldy to debug by printing and checking the output by hand. Here are some suggestions for debugging large datasets:
-
-### 11.9 Glossary
-
-mapping: A relationship in which each element of one set corresponds to an element of another set.
 
 ### 11.10 Exercises
 

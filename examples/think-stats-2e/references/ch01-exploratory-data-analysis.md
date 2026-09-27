@@ -4,7 +4,7 @@ Source pages 21-36 of the PDF.
 
 ## When to use
 
-Open this file for questions about: respondent, raw data, notebook, ipython, study, record, codebook, counts.
+Open this file for questions about: respondent, notebook, ipython, codebook, counts, file, indices, record.
 
 ## Sections
 
@@ -46,10 +46,6 @@ To work with data effectively, you have to think on two levels at the same time:
 
 Exercise 1.1 In the repository you downloaded, you should find a file named chap01ex.ipynb, which is an IPython notebook. You can launch IPython notebook from the command line like this:
 
-### 1.10 Glossary
-
-• anecdotal evidence: Evidence, often personal, that is collected casually rather than by a well-designed study.
-
 ## Key definitions
 
 - Reports like these are called anecdotal evidence because they are based on data that is unpublished and usually personal.
@@ -63,7 +59,6 @@ Exercise 1.1 In the repository you downloaded, you should find a file named chap
 - These operations are called data cleaning.
 - d is a dictionary that maps from each case ID to a list of indices.
 - The variable pregnum is a recode that indicates how many times each respondent has been pregnant.
-- • population: A group we are interested in studying. “Population” often refers to a group of people, but the term is used for other subjects, too.
 
 ## Worked examples
 

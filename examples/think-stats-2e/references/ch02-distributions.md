@@ -4,7 +4,7 @@ Source pages 37-50 of the PDF.
 
 ## When to use
 
-Open this file for questions about: figure histogram, summary statistic, frequent, frequency, spread, pumpkin, hist, mode.
+Open this file for questions about: figure histogram, pumpkin, summary statistic, hist, describe, part birth, modes, frequent.
 
 ## Sections
 
@@ -51,10 +51,6 @@ We have seen several ways to describe the difference in pregnancy length (if the
 ### 2.11 Exercises
 
 Exercise 2.1 Based on the results in this chapter, suppose you were asked to summarize what you learned about whether first babies arrive late.
-
-### 2.12 Glossary
-
-• distribution: The values that appear in a sample and the frequency of each.
 
 ## Key definitions
 

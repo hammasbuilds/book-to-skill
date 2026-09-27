@@ -4,7 +4,7 @@ Source pages 193-204 of the PDF.
 
 ## When to use
 
-Open this file for questions about: cards, deck, class, rank names, hands, suit, inheritance, poker.
+Open this file for questions about: cards, deck, rank names, hands, suit, class, inheritance, poker.
 
 ## Sections
 
@@ -49,10 +49,6 @@ Inheritance can make debugging difficult because when you invoke a method on an 
 ### 18.10 Data encapsulation
 
 The previous chapters demonstrate a development plan we might call “object-oriented design”. We identified objects we needed—like Point, Rectangle and Time—and defined classes to represent them.
-
-### 18.11 Glossary
-
-encode: To represent one set of values using another set of values by constructing a mapping between them.
 
 ### 18.12 Exercises
 

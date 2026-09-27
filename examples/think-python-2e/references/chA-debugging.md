@@ -4,7 +4,7 @@ Source pages 215-222 of the PDF.
 
 ## When to use
 
-Open this file for questions about: infinite loop, make sure, recursion, suspect, syntaxerror invalid, occurred, model, shouldn.
+Open this file for questions about: infinite loop, make sure, recursion, suspect, invalid, occurred, causes, model.
 
 ## Sections
 

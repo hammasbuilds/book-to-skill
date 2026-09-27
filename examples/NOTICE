@@ -1,0 +1,22 @@
+The two skill packages in this folder are extracts of:
+
+  Think Python: How to Think Like a Computer Scientist, 2nd edition
+  Think Stats: Exploratory Data Analysis, 2nd edition
+  by Allen B. Downey, Green Tea Press
+  https://greenteapress.com/wp/think-python-2e/
+  https://greenteapress.com/wp/think-stats-2e/
+
+Both books are licensed under the Creative Commons Attribution-NonCommercial 3.0
+Unported licence (CC BY-NC 3.0): https://creativecommons.org/licenses/by-nc/3.0/
+
+The extracts are shared under the same licence, for non-commercial use, with this
+attribution; each SKILL.md repeats it in its `license` field. They were produced by
+book-to-skill (MIT) with the glossary sections held out:
+
+  book-to-skill convert data/raw/thinkpython2.pdf --title "Think Python 2e" \
+    --exclude-section Glossary --license "..." --out examples
+  book-to-skill convert data/raw/thinkstats2.pdf --title "Think Stats 2e" \
+    --exclude-section Glossary --license "..." --out examples
+
+These are the same skills the evaluation in results/ scores. The MIT licence of this
+repository covers the code only, not these extracts.

@@ -24,13 +24,41 @@
       "book_code_blocks": 517,
       "in_skill": 76
     },
-    "random_control_retention_by_seed": [
-      0.2989,
-      0.288,
-      0.3261,
-      0.2609,
-      0.2989
-    ]
+    "controls": {
+      "skill": {
+        "words": 13400,
+        "kept": 0.5272,
+        "random_same_budget_mean": 0.2886,
+        "random_same_budget_sd": 0.0312,
+        "random_same_budget_min": 0.2446,
+        "random_same_budget_max": 0.3533,
+        "seeds": 20
+      },
+      "skill_without_definitions": {
+        "words": 10105,
+        "kept": 0.2337,
+        "random_same_budget_mean": 0.2144,
+        "random_same_budget_sd": 0.0346,
+        "random_same_budget_min": 0.1685,
+        "random_same_budget_max": 0.2989,
+        "seeds": 20
+      }
+    },
+    "definition_rule": {
+      "book_sentences": 3658,
+      "book_sentences_matching": 200,
+      "gold": 184,
+      "gold_matching": 71,
+      "kept_by_skill_matching": 65,
+      "kept_by_skill_not_matching": 32,
+      "kept_by_definitions_section": 65,
+      "gold_match_rate": 0.3859,
+      "book_sentence_match_rate": 0.0547,
+      "enrichment": 7.1,
+      "skill_keeps_matching": 0.9155,
+      "skill_keeps_not_matching": 0.2832,
+      "definitions_section_keeps": 0.3533
+    }
   },
   "thinkstats2": {
     "repair_report": {
@@ -57,13 +85,41 @@
       "book_code_blocks": 247,
       "in_skill": 49
     },
-    "random_control_retention_by_seed": [
-      0.2762,
-      0.219,
-      0.2,
-      0.2286,
-      0.2476
-    ]
+    "controls": {
+      "skill": {
+        "words": 9679,
+        "kept": 0.5143,
+        "random_same_budget_mean": 0.2448,
+        "random_same_budget_sd": 0.0364,
+        "random_same_budget_min": 0.1619,
+        "random_same_budget_max": 0.3238,
+        "seeds": 20
+      },
+      "skill_without_definitions": {
+        "words": 7416,
+        "kept": 0.1905,
+        "random_same_budget_mean": 0.1843,
+        "random_same_budget_sd": 0.039,
+        "random_same_budget_min": 0.1048,
+        "random_same_budget_max": 0.2857,
+        "seeds": 20
+      }
+    },
+    "definition_rule": {
+      "book_sentences": 2714,
+      "book_sentences_matching": 109,
+      "gold": 105,
+      "gold_matching": 41,
+      "kept_by_skill_matching": 40,
+      "kept_by_skill_not_matching": 14,
+      "kept_by_definitions_section": 40,
+      "gold_match_rate": 0.3905,
+      "book_sentence_match_rate": 0.0402,
+      "enrichment": 9.7,
+      "skill_keeps_matching": 0.9756,
+      "skill_keeps_not_matching": 0.2188,
+      "definitions_section_keeps": 0.381
+    }
   },
   "progit": {
     "repair_report": {

@@ -4,7 +4,7 @@ Source pages 73-83 of the PDF.
 
 ## When to use
 
-Open this file for questions about: factorial, fibonacci, distance, incremental, palindrome, return statement, recursive, value multiplied.
+Open this file for questions about: factorial, fibonacci, recursive, distance, palindrome, value multiplied, leap faith, incremental development.
 
 ## Sections
 
@@ -45,10 +45,6 @@ What happens if we call factorial and give it 1.5 as an argument?
 ### 6.9 Debugging
 
 Breaking a large program into smaller functions creates natural checkpoints for debugging. If a function is not working, there are three possibilities to consider:
-
-### 6.10 Glossary
-
-temporary variable: A variable used to store an intermediate value in a complex calculation.
 
 ### 6.11 Exercises
 

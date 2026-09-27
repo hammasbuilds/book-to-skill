@@ -34,16 +34,11 @@ In Section 1.4 we read a pandas DataFrame and used it to select and modify data 
 
 Solutions to these exercises are in chap03soln.ipynb and chap03soln.py
 
-### 3.7 Glossary
-
-• Probability mass function (PMF): a representation of a distribution as a function that maps from values to probabilities.
-
 ## Key definitions
 
 - To get from frequencies to probabilities, we divide through by n, which is called normalization.
 - The result is a new Pmf that represents the biased distribution.
 - The set of row names is called the index; the row names themselves are called labels.
-- • index: In a pandas DataFrame, the index is a special column that contains the row labels.
 
 ## Worked examples
 

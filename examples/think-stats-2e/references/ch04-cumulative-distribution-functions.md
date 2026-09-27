@@ -4,7 +4,7 @@ Source pages 65-76 of the PDF.
 
 ## When to use
 
-Open this file for questions about: percentile rank, cumulative distribution, percentilerank, given value, function cdf, field, birth weights, chosen.
+Open this file for questions about: percentile rank, percentilerank, cdf birth, corresponding value, field, pmfs, cumulative, scores.
 
 ## Sections
 
@@ -46,15 +46,10 @@ Percentile ranks are useful for comparing measurements across different groups. 
 
 For the following exercises, you can start with chap04ex.ipynb. My solution is in chap04soln.ipynb.
 
-### 4.10 Glossary
-
-• percentile rank: The percentage of values in a distribution that are less than or equal to a given value.
-
 ## Key definitions
 
 - Statistics like these that represent equally-spaced points in a CDF are called quantiles.
 - The CDF is approximately a straight line, which means that the distribution is uniform.
-- • replacement: A property of a sampling process. “With replacement” means that the same value can be chosen more than once; “without replacement” means that once a value is chosen, it is removed from the population.
 
 ## Worked examples
 

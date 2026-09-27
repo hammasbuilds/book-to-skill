@@ -4,7 +4,7 @@ Source pages 125-136 of the PDF.
 
 ## When to use
 
-Open this file for questions about: estimator, estimation game, mean error, gorillas, rmse, sampling distribution, play, unbiased.
+Open this file for questions about: estimator, estimation game, mean error, gorillas, sampling distribution, play, unbiased, rmse.
 
 ## Sections
 
@@ -33,10 +33,6 @@ Let’s play one more round of the estimation game. I’m thinking of a distribu
 ### 8.6 Exercises
 
 For the following exercises, you can find starter code in chap08ex.ipynb. Solutions are in chap08soln.py
-
-### 8.7 Glossary
-
-• estimation: The process of inferring the parameters of a distribution from a sample.
 
 ## Key definitions
 

@@ -594,7 +594,12 @@ def run_book(spec: BookSpec) -> dict:
         }
         for name, pkg in variants.items()
     }
-    summary["definition_rule"] = definition_rule_overlap(items, conv.book, variants)
+    rule = definition_rule_overlap(items, conv.book, variants)
+    unmatched = [it for it in items if not DEFINING_RE.search(it.gold_sentence)]
+    rule["random_kept_not_matching_by_seed"] = random_control_retention(
+        unmatched, conv.book, variants["skill"]
+    )
+    summary["definition_rule"] = rule
     summary["_items"] = items
     summary["_run"] = run
     summary["_threshold_counts"] = retention_by_threshold(items, corpora)
@@ -632,8 +637,11 @@ def describe_controls(controls: dict, n: int) -> dict:
 
 def describe_definition_rule(d: dict) -> dict:
     m, g = d["gold_matching"], d["gold"]
+    random_rates = [k / max(g - m, 1) for k in d["random_kept_not_matching_by_seed"]]
     return {
         **d,
+        "random_same_budget_keeps_not_matching_mean": round(statistics.mean(random_rates), 4),
+        "random_same_budget_keeps_not_matching_sd": round(statistics.stdev(random_rates), 4),
         "gold_match_rate": round(m / g, 4),
         "book_sentence_match_rate": round(d["book_sentences_matching"] / d["book_sentences"], 4),
         "enrichment": round((m / g) / (d["book_sentences_matching"] / d["book_sentences"]), 1),

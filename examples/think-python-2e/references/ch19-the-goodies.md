@@ -4,7 +4,7 @@ Source pages 205-214 of the PDF.
 
 ## When to use
 
-Open this file for questions about: generator, list comprehension, defaultdict, conditional expressions, named tuple, element appears, counters, sets.
+Open this file for questions about: generator, defaultdict, named tuple, list comprehensions, element appears, conditional expressions, counters, sets.
 
 ## Sections
 
@@ -45,10 +45,6 @@ Many simple objects are basically collections of related values. For example, th
 ### 19.9 Gathering keyword args
 
 In Section 12.4, we saw how to write a function that gathers its arguments into a tuple:
-
-### 19.10 Glossary
-
-conditional expression: An expression that has one of two values, depending on a condition.
 
 ### 19.11 Exercises
 

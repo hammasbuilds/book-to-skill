@@ -4,7 +4,7 @@ Source pages 169-176 of the PDF.
 
 ## When to use
 
-Open this file for questions about: rectangle, circle, embedded, corner, blank, class, point, center.
+Open this file for questions about: rectangle, circle, corner, blank, point, center, rect, class.
 
 ## Sections
 
@@ -37,10 +37,6 @@ Aliasing can make a program difficult to read because changes in one place might
 ### 15.7 Debugging
 
 When you start working with objects, you are likely to encounter some new exceptions. If you try to access an attribute that doesn’t exist, you get an AttributeError:
-
-### 15.8 Glossary
-
-class: A programmer-defined type. A class definition creates a new class object.
 
 ### 15.9 Exercises
 

@@ -4,7 +4,7 @@ Source pages 183-192 of the PDF.
 
 ## When to use
 
-Open this file for questions about: class, subject, print time, object-oriented, init, invokes, pouch, method.
+Open this file for questions about: class, print time, subject, init, pouch, invokes, attributes, object-oriented.
 
 ## Sections
 
@@ -53,10 +53,6 @@ It is legal to add attributes to objects at any point in the execution of a prog
 ### 17.11 Interface and implementation
 
 One of the goals of object-oriented design is to make software more maintainable, which means that you can keep the program working when other parts of the system change, and modify the program to meet new requirements.
-
-### 17.12 Glossary
-
-object-oriented language: A language that provides features, such as programmer-defined types and methods, that facilitate object-oriented programming.
 
 ### 17.13 Exercises
 

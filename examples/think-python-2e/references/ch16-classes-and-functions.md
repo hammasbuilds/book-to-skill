@@ -4,7 +4,7 @@ Source pages 177-182 of the PDF.
 
 ## When to use
 
-Open this file for questions about: time object, pure functions, modifiers, prototype, insight, functional, seconds, hour.
+Open this file for questions about: time object, modifiers, pure functions, prototype, seconds, hour, column, minute.
 
 ## Sections
 
@@ -29,10 +29,6 @@ The development plan I am demonstrating is called “prototype and patch”. For
 ### 16.5 Debugging
 
 A Time object is well-formed if the values of minute and second are between 0 and 60 (including 0 but not 60) and if hour is positive. hour and minute should be integer values, but we might allow second to have a fraction part.
-
-### 16.6 Glossary
-
-prototype and patch: A development plan that involves writing a rough draft of a program, testing, and correcting errors as they are found.
 
 ### 16.7 Exercises
 

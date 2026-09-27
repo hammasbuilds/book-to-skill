@@ -54,10 +54,6 @@ The relational operators work on strings. To see if two strings are equal:
 
 When you use indices to traverse the values in a sequence, it is tricky to get the beginning and end of the traversal right. Here is a function that is supposed to compare two words and return True if one of the words is the reverse of the other, but it contains two errors:
 
-### 8.12 Glossary
-
-object: Something a variable can refer to. For now, you can use “object” and “value”
-
 ### 8.13 Exercises
 
 Exercise 8.1. Read the documentation of the string methods at http: // docs. python. org/ 3/ library/ stdtypes. html# string-methods.
@@ -71,7 +67,6 @@ Exercise 8.1. Read the documentation of the string methods at http: // docs. pyt
 - A method call is called an invocation; in this case, we would say that we are invoking upper on word.
 - The word in is a boolean operator that takes two strings and returns True if the first appears as a substring in the second:
 - Here is a function that is supposed to compare two words and return True if one of the words is the reverse of the other, but it contains two errors:
-- object: Something a variable can refer to.
 - In the movie 2001: A Space Odyssey, the ship computer is called HAL, which is IBM rotated by -1.
 
 ## Worked examples

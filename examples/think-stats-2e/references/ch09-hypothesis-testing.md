@@ -4,7 +4,7 @@ Source pages 137-155 of the PDF.
 
 ## When to use
 
-Open this file for questions about: null hypothesis, test statistic, p-value, runmodel, statistically significant, false, chi-squared, apparent effect.
+Open this file for questions about: null hypothesis, test statistic, runmodel, p-value, absolute, statistically significant, coin, chi-squared.
 
 ## Sections
 
@@ -57,10 +57,6 @@ The hypothesis testing process I demonstrated in this chapter is not, strictly s
 ### 9.12 Exercises
 
 A solution to these exercises is in chap09soln.py.
-
-### 9.13 Glossary
-
-• hypothesis testing: The process of determining whether an apparent effect is statistically significant.
 
 ## Key definitions
 

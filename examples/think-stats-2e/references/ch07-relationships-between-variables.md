@@ -4,7 +4,7 @@ Source pages 111-124 of the PDF.
 
 ## When to use
 
-Open this file for questions about: correlation, rank, covariance, scatter, relationship, controlled, spearman, pearson.
+Open this file for questions about: correlation, rank, covariance, scatter, spearman, relationship, pearson, causation.
 
 ## Sections
 
@@ -45,10 +45,6 @@ If variables A and B are correlated, there are three possible explanations: A ca
 ### 7.9 Exercises
 
 A solution to this exercise is in chap07soln.py.
-
-### 7.10 Glossary
-
-• scatter plot: A visualization of the relationship between two variables, showing one point for each row of data.
 
 ## Key definitions
 

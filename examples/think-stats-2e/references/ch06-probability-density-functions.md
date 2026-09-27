@@ -4,7 +4,7 @@ Source pages 95-110 of the PDF.
 
 ## When to use
 
-Open this file for questions about: probability density, moment, sample skewness, cumulative, kernel, continuous, discrete, skews.
+Open this file for questions about: kernel density, moment, sample skewness, discrete, cumulative probabilities, skews, upper, median.
 
 ## Sections
 
@@ -45,10 +45,6 @@ Skewness is a property that describes the shape of a distribution. If the distri
 ### 6.9 Exercises
 
 A solution to this exercise is in chap06soln.py.
-
-### 6.10 Glossary
-
-• Probability density function (PDF): The derivative of a continuous CDF, a function that maps a value to its probability density.
 
 ## Key definitions
 

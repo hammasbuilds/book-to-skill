@@ -4,7 +4,7 @@ Source pages 23-30 of the PDF.
 
 ## When to use
 
-Open this file for questions about: formal, natural languages, tokens, hello world, basic, ambiguity, instructions, interpreter.
+Open this file for questions about: formal, natural languages, tokens, hello world, ambiguity, meaning, instructions, basic.
 
 ## Sections
 
@@ -37,10 +37,6 @@ Natural languages are the languages people speak, such as English, Spanish, and 
 ### 1.7 Debugging
 
 Programmers make mistakes. For whimsical reasons, programming errors are called bugs and the process of tracking them down is called debugging.
-
-### 1.8 Glossary
-
-problem solving: The process of formulating a problem, finding a solution, and expressing it.
 
 ### 1.9 Exercises
 

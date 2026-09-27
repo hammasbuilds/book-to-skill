@@ -4,7 +4,7 @@ Source pages 157-171 of the PDF.
 
 ## When to use
 
-Open this file for questions about: slope, residuals, inter, least squares, sampling distribution, null hypothesis, fitted line, linear.
+Open this file for questions about: slope, residuals, inter, sampling distribution, least squares, null hypothesis, fitted line, linear.
 
 ## Sections
 
@@ -41,10 +41,6 @@ So far we have treated the NSFG data as if it were a representative sample, but 
 ### 10.8 Exercises
 
 A solution to this exercise is in chap10soln.ipynb
-
-### 10.9 Glossary
-
-• linear fit: a line intended to model the relationship between variables.
 
 ## Key definitions
 

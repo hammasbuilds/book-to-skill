@@ -4,7 +4,7 @@ Source pages 111-124 of the PDF.
 
 ## When to use
 
-Open this file for questions about: new list, elements, delimiter, slice, interlock, append, refer, modifies.
+Open this file for questions about: new list, elements, delimiter, slice, refer, interlock, append, modifies.
 
 ## Sections
 
@@ -61,10 +61,6 @@ When you pass a list to a function, the function gets a reference to the list. I
 ### 10.13 Debugging
 
 Careless use of lists (and other mutable objects) can lead to long hours of debugging. Here are some common pitfalls and ways to avoid them:
-
-### 10.14 Glossary
-
-list: A sequence of values.
 
 ### 10.15 Exercises
 
