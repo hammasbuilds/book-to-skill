@@ -6,7 +6,7 @@ import random
 import re
 import textwrap
 import unicodedata
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 from dataclasses import dataclass
 from difflib import SequenceMatcher
 
@@ -179,23 +179,14 @@ def contains_evidence(unit: str, gold_sentence: str, threshold: float = 0.6) -> 
 
 
 def bootstrap_ci(
-    values: Sequence[float],
-    stat: Callable[[Sequence[float]], float] | None = None,
-    n_boot: int = 2000,
-    seed: int = 0,
-    alpha: float = 0.05,
+    values: Sequence[float], n_boot: int = 2000, seed: int = 0, alpha: float = 0.05
 ) -> tuple[float, float]:
-    """Percentile bootstrap interval for the mean (or ``stat``) of ``values``."""
+    """Percentile bootstrap interval for the mean of ``values``."""
     if not values:
         return (0.0, 0.0)
-
-    def mean(xs: Sequence[float]) -> float:
-        return sum(xs) / len(xs)
-
-    fn = stat or mean
     rng = random.Random(seed)
     n = len(values)
-    samples = sorted(fn([values[rng.randrange(n)] for _ in range(n)]) for _ in range(n_boot))
+    samples = sorted(sum(values[rng.randrange(n)] for _ in range(n)) / n for _ in range(n_boot))
     lo = samples[int(alpha / 2 * n_boot)]
     hi = samples[min(n_boot - 1, int((1 - alpha / 2) * n_boot))]
     return (lo, hi)

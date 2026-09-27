@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from booktoskill.bm25 import BM25, stem, tokenize
@@ -93,10 +95,21 @@ def test_long_paragraph_is_split_at_sentences() -> None:
     assert " ".join(chunks) == para
 
 
-def test_chunk_markdown_splits_at_headings() -> None:
+def test_chunk_markdown_packs_across_headings_like_book_chunks() -> None:
     md = "# T\n\nintro\n\n## A\n\nalpha text\n\n## B\n\nbeta text\n"
-    chunks = chunk_markdown({"1": md}, target=200)
-    assert [c.text for c in chunks] == ["# T\n\nintro", "## A\n\nalpha text", "## B\n\nbeta text"]
+    assert [c.text for c in chunk_markdown({"1": md}, target=200)] == [md.strip()]
+    # Regression: splitting at every heading made "200-word" skill chunks
+    # average ~44 words, not comparable with book chunks.
+    long_md = "\n\n".join(f"## S{i}\n\n" + "word " * 60 for i in range(10))
+    chunks = chunk_markdown({"1": long_md}, target=200)
+    sizes = [len(c.text.split()) for c in chunks]
+    assert len(chunks) == 4 and all(150 <= n <= 200 for n in sizes[:-1])
+
+
+def test_chunk_markdown_keeps_fenced_code_whole() -> None:
+    md = "intro text\n\n```\ndef f():\n\n    return 1\n```\n\nafter"
+    chunks = chunk_markdown({"1": md}, target=3)
+    assert "```\ndef f():\n\n    return 1\n```" in [c.text for c in chunks]
 
 
 def test_bm25_ranks_the_matching_document_first() -> None:
@@ -139,3 +152,45 @@ def test_stemmer(word: str, stemmed: str) -> None:
 
 def test_tokenize_drops_stopwords() -> None:
     assert tokenize("What is the Variable?") == ["variable"]
+
+
+def thesis_like_pdf(path: Path) -> Path:
+    """A thesis whose title page reads like a numbered chapter and whose real
+    chapters are unnumbered (the reviewer's Steinberger thesis, reduced)."""
+    from booktoskill.samplepdf import PageSpec, write_pdf
+
+    body = "This paragraph is ordinary body text about the topic of the chapter here."
+    title = PageSpec().line(600, [("B", "1 Automated Reasoning about Programs")], size=24)
+    title.line(560, [("R", "A thesis submitted for the degree of Doctor of Philosophy.")])
+    pages = [title]
+    for name in ("Introduction", "Methods", "Results"):
+        page = PageSpec().line(700, [("B", name)], size=24)
+        y = 660
+        for sec in ("Background", "Details"):
+            page.line(y, [("B", f"{name} {sec}")], size=14)
+            y -= 30
+            for _ in range(4):
+                page.line(y, [("R", body)])
+                y -= 14
+            y -= 10
+        pages.append(page)
+    return write_pdf(path, pages)
+
+
+def test_one_stray_number_does_not_disable_chapter_numbering(tmp_path: Path) -> None:
+    from booktoskill.pipeline import convert
+    from booktoskill.structure import content_coverage
+
+    book = convert(thesis_like_pdf(tmp_path / "thesis.pdf")).book
+    numbered = [(c.number, c.title) for c in book.chapters if is_content_chapter(c)]
+    assert numbered == [("1", "Introduction"), ("2", "Methods"), ("3", "Results")]
+    assert content_coverage(book) > 0.9
+
+
+def test_convert_writes_every_chapter_of_the_thesis(tmp_path: Path) -> None:
+    from booktoskill.cli import main
+
+    pdf = thesis_like_pdf(tmp_path / "thesis.pdf")
+    assert main(["convert", str(pdf), "--out", str(tmp_path / "s")]) == 0
+    files = list((tmp_path / "s").glob("*/references/*.md"))
+    assert len(files) == 3

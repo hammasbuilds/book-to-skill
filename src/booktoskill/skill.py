@@ -34,7 +34,7 @@ _WORD_RE = re.compile(r"[a-z][a-z-]{2,}")
 # Sentences that define a term. Font weight is deliberately NOT used: the
 # evaluation's gold passages are the author's bold terms, and a writer that
 # keyed on bold would pass the test by construction.
-_DEFINING_RE = re.compile(
+DEFINING_RE = re.compile(
     r"\b(?:is called|are called|is known as|are known as|we call|refers? to|"
     r"is defined as|are defined as|is a (?:\w+ ){0,3}(?:that|which|used)|"
     r"means that|is short for|stands for)\b",
@@ -126,7 +126,7 @@ def _definitions(blocks: list[Block], limit: int) -> list[str]:
         if b.kind != "paragraph":
             continue
         for s in sentences(b.text):
-            if _DEFINING_RE.search(s) and 6 <= len(s.split()) <= 45 and s not in found:
+            if DEFINING_RE.search(s) and 6 <= len(s.split()) <= 45 and s not in found:
                 found.append(s)
     return found[:limit]
 
@@ -190,9 +190,19 @@ def extractive_reference(
 
 
 def skill_markdown(
-    name: str, title: str, chapters: list[Chapter], files: dict[str, str], triggers: list[list[str]]
+    name: str,
+    title: str,
+    chapters: list[Chapter],
+    files: dict[str, str],
+    triggers: list[list[str]],
+    source: str | None = None,
 ) -> str:
-    """SKILL.md: YAML frontmatter plus a one-row-per-chapter index."""
+    """SKILL.md: YAML frontmatter plus a one-row-per-chapter index.
+
+    ``source`` (author, publisher, licence) goes into the frontmatter's
+    ``license`` field and under the title: the reference files are extracts
+    of the book and carry its licence, not this tool's.
+    """
     names = "; ".join(ch.title for ch in chapters)
     description = (
         f'Knowledge from the book "{title}": {names}. Use when a task needs the '
@@ -204,10 +214,12 @@ def skill_markdown(
         "---",
         f"name: {name}",
         f"description: {json.dumps(description, ensure_ascii=False)}",
+        *([f"license: {json.dumps(source, ensure_ascii=False)}"] if source else []),
         "---",
         "",
         f"# {title}",
         "",
+        *([f"Extracted from *{title}*: {source}.", ""] if source else []),
         "Each chapter of the book has a reference file with its sections, key definitions "
         "and worked examples. Find the chapter below whose topics match the task, then "
         "read only that file.",
@@ -225,6 +237,7 @@ def build_extractive_skill(
     name: str | None = None,
     exclude: tuple[str, ...] = (),
     max_definitions: int = 12,
+    source: str | None = None,
 ) -> SkillPackage:
     """A skill package whose reference files are selected from the book, no model."""
     chapters = [ch for ch in book.chapters if is_content_chapter(ch)]
@@ -237,7 +250,7 @@ def build_extractive_skill(
         files[ch.number]: extractive_reference(ch, t, exclude, max_definitions=max_definitions)
         for ch, t in zip(chapters, triggers, strict=True)
     }
-    md = skill_markdown(name, book.title, chapters, files, triggers)
+    md = skill_markdown(name, book.title, chapters, files, triggers, source)
     return SkillPackage(name, md, refs, files)
 
 

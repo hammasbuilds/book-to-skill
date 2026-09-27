@@ -81,18 +81,37 @@ def chunk_book(book: Book, target: int = 200, exclude: tuple[str, ...] = ()) -> 
 
 
 def chunk_markdown(files: dict[str, str], target: int = 200) -> list[Chunk]:
-    """Chunk markdown reference files, splitting at headings and blank lines.
+    """Chunk markdown reference files into ~``target``-word units.
 
     ``files`` maps a chapter number to that chapter's reference-file text.
+    Paragraphs (blank-line separated, headings included) are packed across
+    headings within a file, exactly as book chunks are packed, so a skill
+    chunk and a book chunk hold comparable amounts of text. Fenced code is
+    kept whole.
     """
     out: list[Chunk] = []
     for chapter, text in files.items():
-        sections = re.split(r"\n(?=#{1,3} )", text)
-        for s_index, section in enumerate(sections):
-            pieces = [p.strip() for p in re.split(r"\n\s*\n", section) if p.strip()]
-            for i, chunk in enumerate(chunk_pieces(pieces, target)):
-                out.append(Chunk(f"{chapter}/s{s_index}/{i}", chapter, "", chunk))
+        for i, chunk in enumerate(chunk_pieces(_markdown_pieces(text), target)):
+            out.append(Chunk(f"{chapter}/{i}", chapter, "", chunk))
     return out
+
+
+def _markdown_pieces(text: str) -> list[str]:
+    pieces: list[str] = []
+    fence: list[str] | None = None
+    for part in re.split(r"\n\s*\n", text):
+        if fence is not None:
+            fence.append(part)
+            if part.rstrip().endswith("```"):
+                pieces.append("\n\n".join(fence))
+                fence = None
+        elif part.lstrip().startswith("```") and part.count("```") % 2 == 1:
+            fence = [part]
+        elif part.strip():
+            pieces.append(part.strip())
+    if fence is not None:
+        pieces.append("\n\n".join(fence))
+    return pieces
 
 
 def whole_files(files: dict[str, str]) -> list[Chunk]:

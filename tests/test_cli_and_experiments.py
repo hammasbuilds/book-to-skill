@@ -143,5 +143,77 @@ def test_convert_without_chapters_explains(
     for i in range(12):
         spec.line(700 - 14 * i, [("R", f"Plain prose with no headings at all, line number {i}.")])
     f = write_pdf(tmp_path / "flat.pdf", [spec])
-    assert main(["convert", str(f), "--out", str(tmp_path)]) == 2
+    assert main(["convert", str(f), "--out", str(tmp_path)]) == 3
+    assert "only 0% of the book's text" in capsys.readouterr().err
+    assert main(["convert", str(f), "--out", str(tmp_path), "--allow-low-coverage"]) == 2
     assert "no numbered chapters" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("k", ["-3", "0"])
+def test_search_rejects_non_positive_k(tiny_pdf: Path, k: str) -> None:
+    with pytest.raises(SystemExit) as exc:
+        main(["search", str(tiny_pdf), "loop", "-k", k])
+    assert exc.value.code == 2
+
+
+def test_inspect_has_no_exclude_option(tiny_pdf: Path) -> None:
+    with pytest.raises(SystemExit):
+        main(["inspect", str(tiny_pdf), "--exclude-section", "Glossary"])
+
+
+def test_directory_is_reported_as_directory(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert main(["inspect", str(tmp_path)]) == 2
+    assert "is a directory" in capsys.readouterr().err
+
+
+def test_non_ascii_title_on_a_legacy_console(
+    tiny_pdf: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import io
+    import sys
+
+    raw = io.BytesIO()
+    monkeypatch.setattr(sys, "stdout", io.TextIOWrapper(raw, encoding="cp1252"))
+    assert main(["inspect", str(tiny_pdf), "--title", "Ελλάδα — Steinberger"]) == 0
+    sys.stdout.flush()
+    assert raw.getvalue().startswith(b"title: ??????")  # replaced, not a crash
+
+
+def test_convert_reports_ratio_and_writes_licence(
+    tiny_pdf: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    licence = "Jane Doe, CC BY-NC 3.0"
+    assert main(["convert", str(tiny_pdf), "--out", str(tmp_path), "--license", licence]) == 0
+    out = capsys.readouterr().out
+    assert "reference / chapter words:" in out and "kept" not in out
+    skill_md = (tmp_path / "a-tiny-book" / "SKILL.md").read_text(encoding="utf-8")
+    assert f'license: "{licence}"' in skill_md.split("---")[1]
+    assert f"Extracted from *A Tiny Book*: {licence}." in skill_md
+
+
+@pytest.mark.parametrize(
+    ("title", "junk"),
+    [
+        ("thesis.dvi", True),
+        ("main.tex", True),
+        ("Microsoft Word - draft7.docx", True),
+        ("Untitled", True),
+        ("12345", True),
+        ("Think Python", False),
+        ("Pro Git", False),
+    ],
+)
+def test_junk_metadata_titles(title: str, junk: bool) -> None:
+    from booktoskill.pipeline import junk_title
+
+    assert junk_title(title) is junk
+
+
+def test_junk_metadata_falls_back_to_title_page(tmp_path: Path) -> None:
+    from booktoskill.pipeline import convert
+    from booktoskill.samplepdf import tiny_book, write_pdf
+
+    pdf = write_pdf(tmp_path / "t.pdf", tiny_book(), title="thesis.dvi")
+    assert convert(pdf).book.title == "A Tiny Book"

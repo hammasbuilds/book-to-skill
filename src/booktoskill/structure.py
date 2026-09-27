@@ -124,7 +124,9 @@ def detect_structure(blocks: list[Block], title: str = "") -> Book:
             current.sections[-1].blocks.append(block)
         else:
             current.intro.append(block)
-    if not any(ch.number for ch in chapters):
+    if _numbers_unreliable(chapters):
+        for ch in chapters:
+            ch.number = ""
         _number_unlabelled(chapters)
     if front.intro or front.sections:
         chapters.insert(0, front)
@@ -133,6 +135,24 @@ def detect_structure(blocks: list[Block], title: str = "") -> Book:
         chapters=chapters,
         heading_sizes={"chapter": chapter_size or 0.0, "section": section_size or 0.0},
     )
+
+
+def _numbers_unreliable(chapters: list[Chapter]) -> bool:
+    """Too few title-level headings carry a number for the numbering to be the book's.
+
+    A book that prints chapter numbers numbers (nearly) all of its chapters.
+    When fewer than half of the headings that look like chapters (two or more
+    sections) are numbered, the numbers that were found are accidents - a
+    thesis title page reading "1 Introduction to ..." or a year - and the
+    whole book is renumbered instead. One stray number must not switch the
+    fallback off.
+    """
+    candidates = [ch for ch in chapters if len(ch.sections) >= 2]
+    numbered = [ch for ch in candidates if ch.number]
+    stray = [ch for ch in chapters if ch.number and len(ch.sections) < 2]
+    if not candidates:
+        return False
+    return len(numbered) < len(candidates) / 2 or len(stray) > len(numbered)
 
 
 def _number_unlabelled(chapters: list[Chapter]) -> None:
@@ -157,6 +177,15 @@ def _number_unlabelled(chapters: list[Chapter]) -> None:
 def is_content_chapter(chapter: Chapter) -> bool:
     """Numbered chapters and appendices; not contents, preface or index."""
     return bool(chapter.number)
+
+
+def content_coverage(book: Book) -> float:
+    """Share of the book's words that sit inside numbered chapters."""
+    total = sum(len(b.text.split()) for ch in book.chapters for b in ch.blocks())
+    inside = sum(
+        len(b.text.split()) for ch in book.chapters if is_content_chapter(ch) for b in ch.blocks()
+    )
+    return inside / total if total else 0.0
 
 
 def book_to_markdown(book: Book) -> str:

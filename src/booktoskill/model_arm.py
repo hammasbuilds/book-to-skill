@@ -15,11 +15,10 @@ from booktoskill.answering import CONDITIONS, Outcome, calls_per_item, run_item
 from booktoskill.bm25 import BM25
 from booktoskill.chunking import chunk_book, chunk_markdown, whole_files
 from booktoskill.experiments import (
+    CHUNK_WORDS,
     HOLDOUT,
     BookSpec,
     Corpus,
-    book_specs,
-    check_inputs,
     filter_to_pdf,
     load_gold,
     run_retrieval,
@@ -63,10 +62,20 @@ def term_mentioned(items: list[GoldItem], refs: dict[str, str]) -> float:
     return hits / len(items)
 
 
-def plan(data_dir: str | Path) -> dict:
+def question_books(specs: list[BookSpec]) -> list[BookSpec]:
+    """The books with a question set, after checking their PDF and LaTeX exist."""
+    books = [s for s in specs if s.tex is not None]
+    missing = [str(p) for s in books for p in (s.pdf, s.tex) if p is None or not p.exists()]
+    if missing:
+        raise FileNotFoundError(
+            "missing inputs (run scripts/fetch_data.sh first): " + ", ".join(missing)
+        )
+    return books
+
+
+def plan(specs: list[BookSpec]) -> dict:
     """The job list and call count, without calling any model."""
-    specs = [s for s in book_specs(data_dir) if s.tex is not None]  # books with questions
-    check_inputs(specs)
+    specs = question_books(specs)
     per_item = calls_per_item(n_skills=2)
     jobs = []
     total = 0
@@ -120,15 +129,14 @@ def summarise(outcomes: list[Outcome]) -> dict:
 
 
 def run(
-    data_dir: str | Path,
+    specs: list[BookSpec],
     results_dir: str | Path,
     out_dir: str | Path,
     client: Client,
     judge_client: Client,
     k: int = 5,
 ) -> dict:
-    specs = [s for s in book_specs(data_dir) if s.tex is not None]  # books with questions
-    check_inputs(specs)
+    specs = question_books(specs)
     results_dir, out_dir = Path(results_dir), Path(out_dir)
     results_dir.mkdir(parents=True, exist_ok=True)
     report: dict = {"model": client.model, "judge": judge_client.model, "books": {}}
@@ -142,16 +150,16 @@ def run(
         write_skill(llm_pkg, out_dir / "llm")
         write_skill(job.extractive, out_dir / "extractive")
         refs = llm_pkg.reference_by_chapter()
-        chunks = chunk_book(job.conv.book, 200, HOLDOUT)
+        chunks = chunk_book(job.conv.book, CHUNK_WORDS, HOLDOUT)
         extractive_refs = job.extractive.reference_by_chapter()
         retrieval = summarise_retrieval(
             run_retrieval(
                 job.items,
                 [
                     Corpus("book_chunks", chunks),
-                    Corpus("skill_reference_files", whole_files(extractive_refs)),
-                    Corpus("llm_skill_reference_chunks", chunk_markdown(refs, 200)),
-                    Corpus("llm_skill_reference_files", whole_files(refs)),
+                    Corpus("skill_chunks", chunk_markdown(extractive_refs, CHUNK_WORDS)),
+                    Corpus("llm_skill_chunks", chunk_markdown(refs, CHUNK_WORDS)),
+                    Corpus("llm_skill_files", whole_files(refs)),
                 ],
             )
         )

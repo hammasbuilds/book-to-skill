@@ -258,113 +258,128 @@ def _paragraph_break(
     return gap > 1.28 * leading or bool(_BULLET_RE.match(text)) or indented or short_prev
 
 
-def build_blocks(
-    pages: list[Page], opts: RepairOptions | None = None
-) -> tuple[list[Block], RepairReport]:
-    """Turn positioned lines into headings, paragraphs and code blocks."""
-    opts = opts or RepairOptions()
-    report = RepairReport()
-    if opts.figures:
-        pages = strip_figure_text(pages, report)
-    body = body_font_size(pages)
-    report.body_size = body
-    page_lines = strip_headers(pages, report) if opts.headers else [page.lines for page in pages]
+def _leading(page_lines: list[list[Line]], body: float) -> float:
+    """The most common baseline-to-baseline distance between body lines.
 
+    A median would be pulled up by the larger gaps around headings and listings.
+    """
     spacings = [
         a.y - b.y
         for lines in page_lines
         for a, b in zip(lines, lines[1:], strict=False)
         if abs(a.size - body) < 0.5 and abs(b.size - body) < 0.5 and 0 < a.y - b.y < 3 * body
     ]
-    # The most common baseline-to-baseline distance is the leading; a median
-    # would be pulled up by the larger gaps around headings and listings.
-    leading = (
-        Counter(round(s * 2) / 2 for s in spacings).most_common(1)[0][0] if spacings else body * 1.2
-    )
+    modes = Counter(round(s * 2) / 2 for s in spacings).most_common(1)
+    return modes[0][0] if modes else body * 1.2
 
-    page_lines_offset = pages[0].index if pages else 0
-    blocks: list[Block] = []
-    # A paragraph being assembled: its lines and whether it is code.
-    current: list[tuple[Line, str]] = []
-    current_kind = ""
 
-    def flush() -> None:
-        nonlocal current, current_kind
-        if not current:
+class _Assembler:
+    """Groups consecutive lines into headings, paragraphs and code blocks."""
+
+    def __init__(
+        self,
+        page_lines: list[list[Line]],
+        first_page: int,
+        body: float,
+        opts: RepairOptions,
+        report: RepairReport,
+    ) -> None:
+        self.page_lines = page_lines
+        self.first_page = first_page
+        self.body = body
+        self.opts = opts
+        self.report = report
+        self.leading = _leading(page_lines, body)
+        self.geometry = {i: _page_geometry(lines) for i, lines in enumerate(page_lines)}
+        self.blocks: list[Block] = []
+        self.current: list[tuple[Line, str]] = []
+        self.kind = ""
+
+    def flush(self) -> None:
+        if not self.current:
             return
-        page = current[0][0].page
-        if current_kind == "code":
-            blocks.append(Block("code", _code_text(current, leading), page, body))
-            report.code_blocks += 1
-        elif current_kind == "heading":
-            text = " ".join(t for _, t in current)
-            size = max(ln.size for ln, _ in current)
-            blocks.append(Block("heading", text, page, size))
+        page = self.current[0][0].page
+        if self.kind == "code":
+            self.blocks.append(
+                Block("code", _code_text(self.current, self.leading), page, self.body)
+            )
+            self.report.code_blocks += 1
+        elif self.kind == "heading":
+            text = " ".join(t for _, t in self.current)
+            size = max(ln.size for ln, _ in self.current)
+            self.blocks.append(Block("heading", text, page, size))
         else:
-            blocks.append(Block("paragraph", _join_lines([t for _, t in current]), page, body))
-        current = []
-        current_kind = ""
+            text = _join_lines([t for _, t in self.current])
+            self.blocks.append(Block("paragraph", text, page, self.body))
+        self.current, self.kind = [], ""
 
-    geometry = {i: _page_geometry(lines) for i, lines in enumerate(page_lines)}
-    for page_index, lines in enumerate(page_lines):
-        left = geometry[page_index][0]
-        for i, line in enumerate(lines):
-            if _is_heading(line, body):
-                kind = "heading"
-            elif _is_code(line, opts):
-                kind = "code"
-            else:
-                kind = "paragraph"
-            text = _line_text(line, opts, code=kind == "code")
-            if not text.strip():
-                continue
-            if not opts.reflow:
-                flush()
-                current, current_kind = [(line, text)], kind
-                flush()
-                continue
-            prev_line = current[-1][0] if current else None
-            same_page = prev_line is not None and prev_line.page == line.page
-            gap = prev_line.y - line.y if prev_line is not None and same_page else 0.0
-            # A monospaced line that continues a sentence at normal leading is
-            # inline code wrapped onto its own line (a URL, an identifier),
-            # not a code block.
-            if (
-                kind == "code"
-                and current_kind == "paragraph"
-                and same_page
-                and gap <= 1.15 * leading
-                and not current[-1][1].rstrip().endswith(":")
-            ):
-                kind = "paragraph"
-            new = kind != current_kind
-            if not new and prev_line is not None:
-                prev_text = current[-1][1]
-                if kind == "heading":
-                    new = abs(prev_line.size - line.size) > 0.5 or gap > 2.5 * line.size
-                elif kind == "code":
-                    # A blank line inside a listing is one extra leading; a
-                    # gap much larger than that is prose or a new listing.
-                    new = gap > 2.6 * leading
-                else:
-                    new = _paragraph_break(
-                        line,
-                        text,
-                        prev_line,
-                        prev_text,
-                        lines[i + 1] if i + 1 < len(lines) else None,
-                        gap=gap,
-                        left=left,
-                        prev_right=geometry[prev_line.page - page_lines_offset][1],
-                        body=body,
-                        leading=leading,
-                    )
-            if new:
-                flush()
-                current_kind = kind
-            current.append((line, text))
-    flush()
+    def _classify(self, line: Line) -> str:
+        if _is_heading(line, self.body):
+            return "heading"
+        return "code" if _is_code(line, self.opts) else "paragraph"
 
+    def _starts_new_block(self, kind: str, line: Line, text: str, nxt: Line | None) -> bool:
+        if kind != self.kind or not self.current:
+            return True
+        prev_line, prev_text = self.current[-1]
+        gap = prev_line.y - line.y if prev_line.page == line.page else 0.0
+        if kind == "heading":
+            return abs(prev_line.size - line.size) > 0.5 or gap > 2.5 * line.size
+        if kind == "code":
+            # A blank line inside a listing is one extra leading; a gap much
+            # larger than that is prose or a new listing.
+            return gap > 2.6 * self.leading
+        page = line.page - self.first_page
+        return _paragraph_break(
+            line,
+            text,
+            prev_line,
+            prev_text,
+            nxt,
+            gap=gap,
+            left=self.geometry[page][0],
+            prev_right=self.geometry[prev_line.page - self.first_page][1],
+            body=self.body,
+            leading=self.leading,
+        )
+
+    def _inline_code(self, line: Line) -> bool:
+        """A monospaced line continuing a sentence at normal leading is inline
+        code wrapped onto its own line (a URL, an identifier), not a listing."""
+        if self.kind != "paragraph" or not self.current:
+            return False
+        prev_line, prev_text = self.current[-1]
+        return (
+            prev_line.page == line.page
+            and prev_line.y - line.y <= 1.15 * self.leading
+            and not prev_text.rstrip().endswith(":")
+        )
+
+    def run(self) -> list[Block]:
+        for lines in self.page_lines:
+            for i, line in enumerate(lines):
+                kind = self._classify(line)
+                text = _line_text(line, self.opts, code=kind == "code")
+                if not text.strip():
+                    continue
+                if not self.opts.reflow:
+                    self.flush()
+                    self.current, self.kind = [(line, text)], kind
+                    self.flush()
+                    continue
+                if kind == "code" and self._inline_code(line):
+                    kind = "paragraph"
+                nxt = lines[i + 1] if i + 1 < len(lines) else None
+                if self._starts_new_block(kind, line, text, nxt):
+                    self.flush()
+                    self.kind = kind
+                self.current.append((line, text))
+        self.flush()
+        return self.blocks
+
+
+def _text_repairs(blocks: list[Block], opts: RepairOptions, report: RepairReport) -> None:
+    """Repairs on assembled text: ligatures, line-end hyphens, kerning splits."""
     if opts.ligatures:
         for block in blocks:
             block.text, n = expand_ligatures(block.text)
@@ -376,6 +391,22 @@ def build_blocks(
             block.text = block.text.replace(_BREAK, " ")
     if opts.spacing:
         _rejoin_kerning_splits(blocks, report)
+
+
+def build_blocks(
+    pages: list[Page], opts: RepairOptions | None = None
+) -> tuple[list[Block], RepairReport]:
+    """Turn positioned lines into headings, paragraphs and code blocks."""
+    opts = opts or RepairOptions()
+    report = RepairReport()
+    if opts.figures:
+        pages = strip_figure_text(pages, report)
+    body = body_font_size(pages)
+    report.body_size = body
+    page_lines = strip_headers(pages, report) if opts.headers else [page.lines for page in pages]
+    first_page = pages[0].index if pages else 0
+    blocks = _Assembler(page_lines, first_page, body, opts, report).run()
+    _text_repairs(blocks, opts, report)
     return blocks, report
 
 

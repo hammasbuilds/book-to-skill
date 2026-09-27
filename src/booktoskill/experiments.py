@@ -8,8 +8,9 @@ from __future__ import annotations
 
 import json
 import random
+import statistics
 import sys
-from dataclasses import asdict, dataclass, fields, replace
+from dataclasses import asdict, dataclass, field, fields, replace
 from pathlib import Path
 
 from booktoskill.bm25 import BM25
@@ -37,11 +38,15 @@ from booktoskill.references import (
     gold_from_latex,
     parse_html_edition,
 )
-from booktoskill.skill import SkillPackage, build_extractive_skill, sentences
+from booktoskill.skill import DEFINING_RE, SkillPackage, build_extractive_skill, sentences
 from booktoskill.structure import Book, is_content_chapter
 
 HOLDOUT = ("Glossary",)
 KS = (1, 3, 5, 10)
+WORD_BUDGETS = (250, 500, 1000, 2000)
+HEADLINE_BUDGET = 1000
+CHUNK_WORDS = 200
+RANDOM_SEEDS = 20
 
 
 @dataclass(frozen=True)
@@ -251,10 +256,11 @@ class Corpus:
 
 
 def random_budget_references(book: Book, pkg: SkillPackage, seed: int) -> dict[str, str]:
-    """Control: per chapter, random sentences up to the skill file's word count.
+    """Control: per chapter, random sentences up to ``pkg``'s file word count.
 
-    Same budget, no selection rule. If the extractive writer keeps more gold
-    evidence than this, its rules are doing something beyond compressing.
+    Same budget, no selection rule. Built against each skill variant's own
+    budget: a control at a larger budget than the variant it is compared with
+    would make that variant look worse than chance by construction.
     """
     rng = random.Random(seed)
     budgets = {ch: len(t.split()) for ch, t in pkg.reference_by_chapter().items()}
@@ -276,30 +282,45 @@ def random_budget_references(book: Book, pkg: SkillPackage, seed: int) -> dict[s
     return out
 
 
-def build_corpora(conv: Conversion, raw_conv: Conversion, pkg: SkillPackage) -> list[Corpus]:
-    refs = pkg.reference_by_chapter()
-    no_defs = build_extractive_skill(conv.book, exclude=HOLDOUT, max_definitions=0)
-    random_refs = random_budget_references(conv.book, pkg, seed=0)
+def skill_variants(book: Book) -> dict[str, SkillPackage]:
+    """The evaluated skill and its ablation without the definitions section."""
+    return {
+        "skill": build_extractive_skill(book, exclude=HOLDOUT),
+        "skill_without_definitions": build_extractive_skill(
+            book, exclude=HOLDOUT, max_definitions=0
+        ),
+    }
 
+
+def build_corpora(
+    conv: Conversion, raw_conv: Conversion, variants: dict[str, SkillPackage]
+) -> list[Corpus]:
+    """Retrieval corpora. Every chunked corpus uses the same ~200-word chunker."""
+    refs = variants["skill"].reference_by_chapter()
+    no_defs = variants["skill_without_definitions"].reference_by_chapter()
     return [
-        Corpus("book_chunks", chunk_book(conv.book, 200, HOLDOUT)),
-        Corpus("book_chunks_no_repair", chunk_book(raw_conv.book, 200, HOLDOUT)),
-        Corpus("skill_reference_chunks", chunk_markdown(refs, 200)),
-        Corpus("skill_reference_files", whole_files(refs)),
-        Corpus("skill_without_definitions_files", whole_files(no_defs.reference_by_chapter())),
-        Corpus("random_same_budget_files", whole_files(random_refs)),
+        Corpus("book_chunks", chunk_book(conv.book, CHUNK_WORDS, HOLDOUT)),
+        Corpus("book_chunks_no_repair", chunk_book(raw_conv.book, CHUNK_WORDS, HOLDOUT)),
+        Corpus("skill_chunks", chunk_markdown(refs, CHUNK_WORDS)),
+        Corpus("skill_files", whole_files(refs)),
+        Corpus("skill_without_definitions_chunks", chunk_markdown(no_defs, CHUNK_WORDS)),
+        Corpus(
+            "random_sentences_chunks",
+            chunk_markdown(random_budget_references(conv.book, variants["skill"], 0), CHUNK_WORDS),
+        ),
     ]
 
 
 def random_control_retention(
-    items: list[GoldItem], book: Book, pkg: SkillPackage, seeds: int = 5
-) -> list[float]:
-    """Evidence retention of the random-sentence control over several seeds."""
+    items: list[GoldItem], book: Book, pkg: SkillPackage, seeds: int = RANDOM_SEEDS
+) -> list[int]:
+    """Questions whose gold sentence the random control keeps, one count per seed."""
     out = []
     for seed in range(seeds):
         refs = random_budget_references(book, pkg, seed)
-        hits = [contains_evidence(refs.get(str(it.chapter), ""), it.gold_sentence) for it in items]
-        out.append(round(sum(hits) / len(items), 4))
+        out.append(
+            sum(contains_evidence(refs.get(str(it.chapter), ""), it.gold_sentence) for it in items)
+        )
     return out
 
 
@@ -307,17 +328,38 @@ def queries(item: GoldItem) -> dict[str, str]:
     return {"term": f"What is {item.term}?", "definition": item.definition}
 
 
+def budget_hits(texts: list[str], full_hits: list[bool], gold: str, budget: int) -> bool:
+    """Is the gold evidence inside the first ``budget`` words of the ranked units?
+
+    Units are read in rank order; the unit that crosses the budget is cut at
+    it. This compares corpora of differently sized units at equal reading cost.
+    """
+    used = 0
+    for text, hit in zip(texts, full_hits, strict=True):
+        words = text.split()
+        if used + len(words) <= budget:
+            if hit:
+                return True
+            used += len(words)
+            continue
+        remaining = budget - used
+        return remaining > 0 and contains_evidence(" ".join(words[:remaining]), gold)
+    return False
+
+
 @dataclass
 class RetrievalRun:
     """Per-question outcomes for every corpus, before summarising.
 
     ``hits[(corpus, query_type)][i]`` holds, for question ``i``, a 0/1 flag per
-    retrieved rank saying whether that unit contains the gold evidence.
+    retrieved rank saying whether that unit contains the gold evidence;
+    ``word_hits`` the same question at each word budget in ``WORD_BUDGETS``.
     """
 
     corpora: dict[str, dict[str, int]]
     present: dict[str, list[bool]]
     hits: dict[tuple[str, str], list[list[int]]]
+    word_hits: dict[tuple[str, str], list[dict[int, bool]]] = field(default_factory=dict)
 
     def extend(self, other: RetrievalRun) -> None:
         for name, meta in other.corpora.items():
@@ -328,6 +370,8 @@ class RetrievalRun:
             self.present.setdefault(name, []).extend(flags)
         for key, rows in other.hits.items():
             self.hits.setdefault(key, []).extend(rows)
+        for key, wrows in other.word_hits.items():
+            self.word_hits.setdefault(key, []).extend(wrows)
 
 
 def run_retrieval(items: list[GoldItem], corpora: list[Corpus]) -> RetrievalRun:
@@ -340,16 +384,16 @@ def run_retrieval(items: list[GoldItem], corpora: list[Corpus]) -> RetrievalRun:
             any(contains_evidence(u.text, it.gold_sentence) for u in corpus.units) for it in items
         ]
         for qtype in ("term", "definition"):
-            rows = []
+            rows, wrows = [], []
             for it in items:
-                hits = index.search(queries(it)[qtype], k=max(KS))
-                rows.append(
-                    [
-                        int(contains_evidence(corpus.units[h.index].text, it.gold_sentence))
-                        for h in hits
-                    ]
+                ranked = [corpus.units[h.index].text for h in index.search(queries(it)[qtype], 100)]
+                flags = [contains_evidence(t, it.gold_sentence) for t in ranked]
+                rows.append([int(f) for f in flags[: max(KS)]])
+                wrows.append(
+                    {w: budget_hits(ranked, flags, it.gold_sentence, w) for w in WORD_BUDGETS}
                 )
             run.hits[(corpus.name, qtype)] = rows
+            run.word_hits[(corpus.name, qtype)] = wrows
     return run
 
 
@@ -358,28 +402,82 @@ def _rate(values: list[float]) -> dict:
     return {"value": round(sum(values) / len(values), 4), "ci95": [round(lo, 4), round(hi, 4)]}
 
 
+def _outcomes(run: RetrievalRun, name: str, qtype: str, metric: str) -> list[float]:
+    if metric.endswith("w"):
+        budget = int(metric.removeprefix("recall@").removesuffix("w"))
+        return [float(r[budget]) for r in run.word_hits[(name, qtype)]]
+    k = int(metric.removeprefix("recall@"))
+    return [float(any(r[:k])) for r in run.hits[(name, qtype)]]
+
+
 def summarise_retrieval(run: RetrievalRun, base: str = "book_chunks") -> dict:
     n = len(next(iter(run.present.values())))
+    metrics = [f"recall@{k}" for k in KS] + [f"recall@{w}w" for w in WORD_BUDGETS]
     out: dict = {"n_questions": n, "corpora": {}}
     for name, meta in run.corpora.items():
         entry: dict = dict(meta)
+        entry["mean_unit_words"] = round(meta["words"] / max(meta["units"], 1), 1)
         entry["evidence_retained"] = _rate([float(p) for p in run.present[name]])
         for qtype in ("term", "definition"):
-            rows = run.hits[(name, qtype)]
-            entry[qtype] = {f"recall@{k}": _rate([float(any(r[:k])) for r in rows]) for k in KS}
+            entry[qtype] = {m: _rate(_outcomes(run, name, qtype, m)) for m in metrics}
         out["corpora"][name] = entry
     diffs: dict = {}
     for name in run.corpora:
         if name == base:
             continue
         for qtype in ("term", "definition"):
-            for k in (1, 5):
-                a = [float(any(r[:k])) for r in run.hits[(base, qtype)]]
-                b = [float(any(r[:k])) for r in run.hits[(name, qtype)]]
-                diffs[f"{name} minus {base} / {qtype} / recall@{k}"] = _rate(
+            for metric in ("recall@5", f"recall@{HEADLINE_BUDGET}w"):
+                a = _outcomes(run, base, qtype, metric)
+                b = _outcomes(run, name, qtype, metric)
+                diffs[f"{name} minus {base} / {qtype} / {metric}"] = _rate(
                     [y - x for x, y in zip(a, b, strict=True)]
                 )
     out["paired_differences"] = diffs
+    return out
+
+
+def definition_rule_overlap(
+    items: list[GoldItem], book: Book, variants: dict[str, SkillPackage]
+) -> dict[str, int]:
+    """How far the skill's defining-sentence regex overlaps the gold rule.
+
+    Gold sentences are the ones holding an author-bolded term, and authors
+    bold a term where they define it, so a regex for defining phrases selects
+    gold sentences far more often than book sentences in general. Retention
+    is split by whether the gold sentence matches the regex, and the
+    definitions section is scored on its own.
+    """
+    book_sentences = [
+        s
+        for ch in book.chapters
+        if is_content_chapter(ch)
+        for b in ch.blocks(HOLDOUT)
+        if b.kind == "paragraph"
+        for s in sentences(b.text)
+    ]
+    refs = variants["skill"].reference_by_chapter()
+    out = {
+        "book_sentences": len(book_sentences),
+        "book_sentences_matching": sum(bool(DEFINING_RE.search(s)) for s in book_sentences),
+        "gold": len(items),
+        "gold_matching": 0,
+        "kept_by_skill_matching": 0,
+        "kept_by_skill_not_matching": 0,
+        "kept_by_definitions_section": 0,
+    }
+    for it in items:
+        ref = refs.get(str(it.chapter), "")
+        matches = bool(DEFINING_RE.search(it.gold_sentence))
+        kept = contains_evidence(ref, it.gold_sentence)
+        defs = (
+            ref.split("## Key definitions")[1].split("## Worked examples")[0]
+            if ("## Key definitions" in ref)
+            else ""
+        )
+        out["gold_matching"] += matches
+        out["kept_by_skill_matching"] += kept and matches
+        out["kept_by_skill_not_matching"] += kept and not matches
+        out["kept_by_definitions_section"] += contains_evidence(defs, it.gold_sentence)
     return out
 
 
@@ -455,36 +553,102 @@ def _skill_stats(conv: Conversion, pkg: SkillPackage) -> dict[str, int]:
     }
 
 
-def run_book(spec: BookSpec) -> tuple[dict, list[GoldItem], RetrievalRun | None, dict]:
+def run_book(spec: BookSpec) -> dict:
     """Every no-model result for one book.
 
-    Returns the book's summary, its questions, its per-question retrieval
-    outcomes (None for a book without a question set) and the evidence
-    threshold counts.
+    Keys: extraction, structure, repair_report, skill; and for a book with a
+    question set also gold, retrieval, controls, definition_rule, and the
+    unsummarised ``_items``, ``_run`` and ``_threshold_counts`` for pooling.
     """
     pages = read_pdf(spec.pdf)
     conv = convert(spec.pdf, title=spec.title, pages=pages)
     raw_opts = RepairOptions(**{f.name: False for f in fields(RepairOptions)})
     raw_conv = convert(spec.pdf, raw_opts, title=spec.title, pages=pages)
-    pkg = build_extractive_skill(conv.book, exclude=HOLDOUT)
+    variants = skill_variants(conv.book)
     summary: dict = {
         "extraction": extraction_experiment(spec, pages),
         "structure": structure_experiment(spec, conv, raw_conv),
         "repair_report": {k: v for k, v in asdict(conv.report).items() if k != "removed_examples"},
-        "skill": _skill_stats(conv, pkg),
+        "skill": _skill_stats(conv, variants["skill"]),
     }
     if spec.tex is None:
-        return summary, [], None, {}
+        return summary
     items, gold_stats = load_gold(spec)
     items, dropped = filter_to_pdf(items, conv)
     gold_stats["not_in_pdf_revision"] = dropped
     gold_stats["questions"] = len(items)
-    corpora = build_corpora(conv, raw_conv, pkg)
+    corpora = build_corpora(conv, raw_conv, variants)
     run = run_retrieval(items, corpora)
     summary["gold"] = gold_stats
     summary["retrieval"] = summarise_retrieval(run)
-    summary["random_control_retention_by_seed"] = random_control_retention(items, conv.book, pkg)
-    return summary, items, run, retention_by_threshold(items, corpora)
+    summary["controls"] = {
+        name: {
+            "kept": sum(
+                contains_evidence(
+                    pkg.reference_by_chapter().get(str(it.chapter), ""), it.gold_sentence
+                )
+                for it in items
+            ),
+            "words": sum(len(t.split()) for t in pkg.reference_by_chapter().values()),
+            "random_same_budget_kept_by_seed": random_control_retention(items, conv.book, pkg),
+        }
+        for name, pkg in variants.items()
+    }
+    summary["definition_rule"] = definition_rule_overlap(items, conv.book, variants)
+    summary["_items"] = items
+    summary["_run"] = run
+    summary["_threshold_counts"] = retention_by_threshold(items, corpora)
+    return summary
+
+
+def _add_counts(total: dict, part: dict) -> None:
+    """Sum nested dicts of ints and lists of ints (per-seed counts add elementwise)."""
+    for key, value in part.items():
+        if isinstance(value, dict):
+            _add_counts(total.setdefault(key, {}), value)
+        elif isinstance(value, list):
+            mine = total.setdefault(key, [0] * len(value))
+            total[key] = [x + y for x, y in zip(mine, value, strict=True)]
+        else:
+            total[key] = total.get(key, 0) + value
+
+
+def describe_controls(controls: dict, n: int) -> dict:
+    """Retention of each skill variant vs random sentences at its own budget."""
+    out = {}
+    for name, c in controls.items():
+        rates = [k / n for k in c["random_same_budget_kept_by_seed"]]
+        out[name] = {
+            "words": c["words"],
+            "kept": round(c["kept"] / n, 4),
+            "random_same_budget_mean": round(statistics.mean(rates), 4),
+            "random_same_budget_sd": round(statistics.stdev(rates), 4),
+            "random_same_budget_min": round(min(rates), 4),
+            "random_same_budget_max": round(max(rates), 4),
+            "seeds": len(rates),
+        }
+    return out
+
+
+def describe_definition_rule(d: dict) -> dict:
+    m, g = d["gold_matching"], d["gold"]
+    return {
+        **d,
+        "gold_match_rate": round(m / g, 4),
+        "book_sentence_match_rate": round(d["book_sentences_matching"] / d["book_sentences"], 4),
+        "enrichment": round((m / g) / (d["book_sentences_matching"] / d["book_sentences"]), 1),
+        "skill_keeps_matching": round(d["kept_by_skill_matching"] / max(m, 1), 4),
+        "skill_keeps_not_matching": round(d["kept_by_skill_not_matching"] / max(g - m, 1), 4),
+        "definitions_section_keeps": round(d["kept_by_definitions_section"] / g, 4),
+    }
+
+
+NOTICE = (
+    "questions.jsonl holds glossary definitions and sentences quoted from Think Python 2e "
+    "and Think Stats 2e by Allen B. Downey (Green Tea Press), licensed CC BY-NC 3.0 "
+    "(https://creativecommons.org/licenses/by-nc/3.0/). They are shared here, "
+    "non-commercially and with this attribution, as the answer key for the evaluation.\n"
+)
 
 
 def run_all(data_dir: str | Path, results_dir: str | Path) -> dict:
@@ -496,18 +660,22 @@ def run_all(data_dir: str | Path, results_dir: str | Path) -> dict:
     summary: dict = {}
     pooled = RetrievalRun({}, {}, {})
     all_items: list[GoldItem] = []
-    sensitivity: dict[str, dict[str, int]] = {}
+    sensitivity: dict = {}
+    controls: dict = {}
+    rule: dict = {}
     for spec in specs:
         print(f"[{spec.key}] extraction, structure, retrieval ...", file=sys.stderr, flush=True)
-        book, items, run, counts = run_book(spec)
+        book = run_book(spec)
+        if "_run" in book:
+            all_items.extend(book.pop("_items"))
+            pooled.extend(book.pop("_run"))
+            _add_counts(sensitivity, book.pop("_threshold_counts"))
+            _add_counts(controls, book["controls"])
+            _add_counts(rule, book["definition_rule"])
+            n = book["gold"]["questions"]
+            book["controls"] = describe_controls(book["controls"], n)
+            book["definition_rule"] = describe_definition_rule(book["definition_rule"])
         summary[spec.key] = book
-        all_items.extend(items)
-        if run is not None:
-            pooled.extend(run)
-        for name, row in counts.items():
-            mine = sensitivity.setdefault(name, dict.fromkeys(row, 0))
-            for key, value in row.items():
-                mine[key] += value
 
     def write(name: str, payload: object) -> None:
         (results_dir / name).write_text(
@@ -517,13 +685,16 @@ def run_all(data_dir: str | Path, results_dir: str | Path) -> dict:
     with (results_dir / "questions.jsonl").open("w", encoding="utf-8", newline="\n") as fh:
         for it in all_items:
             fh.write(json.dumps(asdict(it), ensure_ascii=False) + "\n")
+    (results_dir / "NOTICE").write_text(NOTICE, encoding="utf-8", newline="\n")
     for name in ("extraction", "structure"):
         write(f"{name}.json", {k: v[name] for k, v in summary.items()})
     write("retrieval.json", {k: v["retrieval"] for k, v in summary.items() if "retrieval" in v})
     pooled_summary = summarise_retrieval(pooled)
     pooled_summary["evidence_threshold_sensitivity"] = sensitivity
+    pooled_summary["controls"] = describe_controls(controls, len(all_items))
+    pooled_summary["definition_rule"] = describe_definition_rule(rule)
     write("retrieval_pooled.json", pooled_summary)
-    keys = ("repair_report", "gold", "skill", "random_control_retention_by_seed")
+    keys = ("repair_report", "gold", "skill", "controls", "definition_rule")
     write("books.json", {k: {key: v[key] for key in keys if key in v} for k, v in summary.items()})
     summary["pooled_retrieval"] = pooled_summary
     return summary

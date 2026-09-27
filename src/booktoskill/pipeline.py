@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -21,13 +22,25 @@ class Conversion:
     book: Book
 
 
+_JUNK_TITLE_RE = re.compile(
+    r"(\.(dvi|tex|pdf|docx?|odt|indd|ps|rtf|html?)$)|(^microsoft (word|powerpoint) - )"
+    r"|(^(untitled|title|document\d*|slide \d+)$)",
+    re.I,
+)
+
+
+def junk_title(title: str) -> bool:
+    """Metadata a toolchain wrote for itself: a file name, "Untitled", "Microsoft Word - x"."""
+    return bool(_JUNK_TITLE_RE.search(title.strip())) or not re.search("[A-Za-z]{2}", title)
+
+
 def pdf_title(path: str | Path, blocks: list[Block]) -> str:
     """Best available title: /Title metadata, else the largest heading on the
     first three pages (the title page), else the file name."""
     logging.getLogger("pypdf").setLevel(logging.ERROR)
     meta = PdfReader(str(path)).metadata
     title = ((meta.title if meta else None) or "").strip()
-    if title:
+    if title and not junk_title(title):
         return title
     front = [b for b in blocks if b.kind == "heading" and b.page < 3]
     if front:
