@@ -4,7 +4,7 @@
     "corpora": {
       "book_chunks": {
         "units": 418,
-        "words": 62101,
+        "words": 62113,
         "evidence_retained": {
           "value": 1.0,
           "ci95": [
@@ -28,10 +28,10 @@
             ]
           },
           "recall@5": {
-            "value": 0.8315,
+            "value": 0.837,
             "ci95": [
-              0.7717,
-              0.8804
+              0.7826,
+              0.8859
             ]
           },
           "recall@10": {
@@ -58,10 +58,10 @@
             ]
           },
           "recall@5": {
-            "value": 0.8152,
+            "value": 0.8207,
             "ci95": [
-              0.7554,
-              0.8696
+              0.7663,
+              0.875
             ]
           },
           "recall@10": {
@@ -145,8 +145,8 @@
         }
       },
       "skill_reference_chunks": {
-        "units": 309,
-        "words": 13249,
+        "units": 314,
+        "words": 13400,
         "evidence_retained": {
           "value": 0.5272,
           "ci95": [
@@ -156,24 +156,24 @@
         },
         "term": {
           "recall@1": {
-            "value": 0.2391,
+            "value": 0.25,
             "ci95": [
-              0.1793,
-              0.3043
+              0.1902,
+              0.3207
             ]
           },
           "recall@3": {
-            "value": 0.3696,
+            "value": 0.375,
             "ci95": [
-              0.3043,
-              0.4402
+              0.3098,
+              0.4457
             ]
           },
           "recall@5": {
-            "value": 0.4348,
+            "value": 0.4402,
             "ci95": [
-              0.3641,
-              0.5109
+              0.3696,
+              0.5163
             ]
           },
           "recall@10": {
@@ -193,31 +193,31 @@
             ]
           },
           "recall@3": {
-            "value": 0.3424,
+            "value": 0.3478,
             "ci95": [
-              0.2772,
-              0.413
+              0.2826,
+              0.4239
             ]
           },
           "recall@5": {
-            "value": 0.375,
+            "value": 0.3804,
             "ci95": [
-              0.3043,
-              0.4457
+              0.3098,
+              0.4511
             ]
           },
           "recall@10": {
-            "value": 0.4457,
+            "value": 0.4565,
             "ci95": [
-              0.375,
-              0.5163
+              0.3859,
+              0.5272
             ]
           }
         }
       },
       "skill_reference_files": {
         "units": 21,
-        "words": 13249,
+        "words": 13400,
         "evidence_retained": {
           "value": 0.5272,
           "ci95": [
@@ -264,10 +264,10 @@
             ]
           },
           "recall@3": {
-            "value": 0.4728,
+            "value": 0.4783,
             "ci95": [
-              0.4022,
-              0.5435
+              0.4076,
+              0.5489
             ]
           },
           "recall@5": {
@@ -288,7 +288,7 @@
       },
       "skill_without_definitions_files": {
         "units": 21,
-        "words": 9954,
+        "words": 10105,
         "evidence_retained": {
           "value": 0.2337,
           "ci95": [
@@ -298,10 +298,10 @@
         },
         "term": {
           "recall@1": {
-            "value": 0.1902,
+            "value": 0.1848,
             "ci95": [
-              0.1359,
-              0.25
+              0.1304,
+              0.2446
             ]
           },
           "recall@3": {
@@ -328,10 +328,10 @@
         },
         "definition": {
           "recall@1": {
-            "value": 0.1467,
+            "value": 0.1413,
             "ci95": [
-              0.0978,
-              0.2011
+              0.0924,
+              0.1957
             ]
           },
           "recall@3": {
@@ -359,71 +359,71 @@
       },
       "random_same_budget_files": {
         "units": 21,
-        "words": 13420,
+        "words": 13589,
         "evidence_retained": {
-          "value": 0.2826,
+          "value": 0.3098,
           "ci95": [
-            0.2174,
-            0.3478
+            0.2391,
+            0.375
           ]
         },
         "term": {
           "recall@1": {
-            "value": 0.1793,
+            "value": 0.1902,
             "ci95": [
-              0.125,
-              0.2337
+              0.1359,
+              0.25
             ]
           },
           "recall@3": {
-            "value": 0.25,
+            "value": 0.2826,
             "ci95": [
-              0.1902,
-              0.3152
+              0.2174,
+              0.3478
             ]
           },
           "recall@5": {
-            "value": 0.2717,
+            "value": 0.2989,
             "ci95": [
-              0.2065,
-              0.337
+              0.2283,
+              0.3696
             ]
           },
           "recall@10": {
-            "value": 0.2717,
+            "value": 0.2989,
             "ci95": [
-              0.2065,
-              0.337
+              0.2283,
+              0.3696
             ]
           }
         },
         "definition": {
           "recall@1": {
-            "value": 0.1467,
+            "value": 0.1522,
             "ci95": [
-              0.0978,
-              0.2011
+              0.1033,
+              0.2065
             ]
           },
           "recall@3": {
-            "value": 0.1902,
+            "value": 0.212,
             "ci95": [
-              0.1304,
-              0.25
+              0.1522,
+              0.2717
             ]
           },
           "recall@5": {
-            "value": 0.2228,
+            "value": 0.2446,
             "ci95": [
-              0.163,
-              0.2826
+              0.1848,
+              0.3098
             ]
           },
           "recall@10": {
-            "value": 0.2609,
+            "value": 0.288,
             "ci95": [
-              0.1957,
-              0.3261
+              0.2228,
+              0.3587
             ]
           }
         }
@@ -438,10 +438,10 @@
         ]
       },
       "book_chunks_no_repair minus book_chunks / term / recall@5": {
-        "value": -0.1141,
+        "value": -0.1196,
         "ci95": [
           -0.1739,
-          -0.0598
+          -0.0652
         ]
       },
       "book_chunks_no_repair minus book_chunks / definition / recall@1": {
@@ -452,24 +452,24 @@
         ]
       },
       "book_chunks_no_repair minus book_chunks / definition / recall@5": {
-        "value": -0.1196,
+        "value": -0.125,
         "ci95": [
-          -0.1739,
-          -0.0652
+          -0.1793,
+          -0.0707
         ]
       },
       "skill_reference_chunks minus book_chunks / term / recall@1": {
-        "value": -0.2446,
+        "value": -0.2337,
         "ci95": [
-          -0.3261,
-          -0.163
+          -0.3152,
+          -0.1467
         ]
       },
       "skill_reference_chunks minus book_chunks / term / recall@5": {
         "value": -0.3967,
         "ci95": [
           -0.4783,
-          -0.3098
+          -0.3043
         ]
       },
       "skill_reference_chunks minus book_chunks / definition / recall@1": {
@@ -483,7 +483,7 @@
         "value": -0.4402,
         "ci95": [
           -0.5217,
-          -0.3533
+          -0.3587
         ]
       },
       "skill_reference_files minus book_chunks / term / recall@1": {
@@ -494,9 +494,9 @@
         ]
       },
       "skill_reference_files minus book_chunks / term / recall@5": {
-        "value": -0.3152,
+        "value": -0.3207,
         "ci95": [
-          -0.4076,
+          -0.413,
           -0.2228
         ]
       },
@@ -508,66 +508,66 @@
         ]
       },
       "skill_reference_files minus book_chunks / definition / recall@5": {
-        "value": -0.3098,
+        "value": -0.3152,
         "ci95": [
-          -0.3913,
-          -0.2228
+          -0.3967,
+          -0.2283
         ]
       },
       "skill_without_definitions_files minus book_chunks / term / recall@1": {
-        "value": -0.2935,
+        "value": -0.2989,
         "ci95": [
-          -0.375,
-          -0.2065
+          -0.3804,
+          -0.212
         ]
       },
       "skill_without_definitions_files minus book_chunks / term / recall@5": {
-        "value": -0.6033,
+        "value": -0.6087,
         "ci95": [
           -0.6848,
-          -0.5217
+          -0.5272
         ]
       },
       "skill_without_definitions_files minus book_chunks / definition / recall@1": {
-        "value": -0.3587,
+        "value": -0.3641,
         "ci95": [
-          -0.4348,
-          -0.2826
+          -0.4402,
+          -0.288
         ]
       },
       "skill_without_definitions_files minus book_chunks / definition / recall@5": {
-        "value": -0.5924,
+        "value": -0.5978,
         "ci95": [
           -0.6739,
-          -0.5109
+          -0.5163
         ]
       },
       "random_same_budget_files minus book_chunks / term / recall@1": {
-        "value": -0.3043,
+        "value": -0.2935,
         "ci95": [
-          -0.3859,
-          -0.2174
+          -0.3804,
+          -0.2065
         ]
       },
       "random_same_budget_files minus book_chunks / term / recall@5": {
-        "value": -0.5598,
+        "value": -0.538,
         "ci95": [
-          -0.6413,
-          -0.4674
+          -0.625,
+          -0.4457
         ]
       },
       "random_same_budget_files minus book_chunks / definition / recall@1": {
-        "value": -0.3587,
+        "value": -0.3533,
         "ci95": [
-          -0.4511,
-          -0.2772
+          -0.4402,
+          -0.2663
         ]
       },
       "random_same_budget_files minus book_chunks / definition / recall@5": {
-        "value": -0.5924,
+        "value": -0.5761,
         "ci95": [
-          -0.6739,
-          -0.5109
+          -0.6522,
+          -0.5
         ]
       }
     }
@@ -576,8 +576,8 @@
     "n_questions": 105,
     "corpora": {
       "book_chunks": {
-        "units": 327,
-        "words": 48588,
+        "units": 328,
+        "words": 48604,
         "evidence_retained": {
           "value": 1.0,
           "ci95": [
@@ -601,10 +601,10 @@
             ]
           },
           "recall@5": {
-            "value": 0.8476,
+            "value": 0.8571,
             "ci95": [
-              0.7714,
-              0.9143
+              0.7905,
+              0.9238
             ]
           },
           "recall@10": {
@@ -718,8 +718,8 @@
         }
       },
       "skill_reference_chunks": {
-        "units": 204,
-        "words": 9277,
+        "units": 209,
+        "words": 9679,
         "evidence_retained": {
           "value": 0.5143,
           "ci95": [
@@ -736,17 +736,17 @@
             ]
           },
           "recall@3": {
-            "value": 0.3333,
+            "value": 0.3429,
             "ci95": [
-              0.2476,
-              0.4286
+              0.2571,
+              0.4381
             ]
           },
           "recall@5": {
-            "value": 0.4286,
+            "value": 0.4476,
             "ci95": [
-              0.3333,
-              0.5238
+              0.3524,
+              0.5429
             ]
           },
           "recall@10": {
@@ -766,17 +766,17 @@
             ]
           },
           "recall@3": {
-            "value": 0.2857,
+            "value": 0.2952,
             "ci95": [
-              0.2,
-              0.3714
+              0.2095,
+              0.381
             ]
           },
           "recall@5": {
-            "value": 0.3714,
+            "value": 0.3619,
             "ci95": [
-              0.2762,
-              0.4571
+              0.2667,
+              0.4476
             ]
           },
           "recall@10": {
@@ -790,7 +790,7 @@
       },
       "skill_reference_files": {
         "units": 14,
-        "words": 9277,
+        "words": 9679,
         "evidence_retained": {
           "value": 0.5143,
           "ci95": [
@@ -861,7 +861,7 @@
       },
       "skill_without_definitions_files": {
         "units": 14,
-        "words": 7016,
+        "words": 7416,
         "evidence_retained": {
           "value": 0.1905,
           "ci95": [
@@ -871,10 +871,10 @@
         },
         "term": {
           "recall@1": {
-            "value": 0.1619,
+            "value": 0.181,
             "ci95": [
-              0.0952,
-              0.2381
+              0.1143,
+              0.2667
             ]
           },
           "recall@3": {
@@ -932,12 +932,12 @@
       },
       "random_same_budget_files": {
         "units": 14,
-        "words": 9437,
+        "words": 9883,
         "evidence_retained": {
-          "value": 0.2667,
+          "value": 0.2762,
           "ci95": [
-            0.181,
-            0.3524
+            0.1905,
+            0.3619
           ]
         },
         "term": {
@@ -949,54 +949,54 @@
             ]
           },
           "recall@3": {
-            "value": 0.2667,
+            "value": 0.2762,
             "ci95": [
-              0.181,
-              0.3524
+              0.1905,
+              0.3619
             ]
           },
           "recall@5": {
-            "value": 0.2667,
+            "value": 0.2762,
             "ci95": [
-              0.181,
-              0.3524
+              0.1905,
+              0.3619
             ]
           },
           "recall@10": {
-            "value": 0.2667,
+            "value": 0.2762,
             "ci95": [
-              0.181,
-              0.3524
+              0.1905,
+              0.3619
             ]
           }
         },
         "definition": {
           "recall@1": {
-            "value": 0.1714,
+            "value": 0.2,
             "ci95": [
-              0.1048,
-              0.2476
+              0.1238,
+              0.2762
             ]
           },
           "recall@3": {
-            "value": 0.2095,
-            "ci95": [
-              0.1333,
-              0.2857
-            ]
-          },
-          "recall@5": {
             "value": 0.219,
             "ci95": [
               0.1429,
-              0.3048
+              0.2952
+            ]
+          },
+          "recall@5": {
+            "value": 0.2286,
+            "ci95": [
+              0.1524,
+              0.3143
             ]
           },
           "recall@10": {
-            "value": 0.2381,
+            "value": 0.2476,
             "ci95": [
               0.1619,
-              0.3238
+              0.3333
             ]
           }
         }
@@ -1011,10 +1011,10 @@
         ]
       },
       "book_chunks_no_repair minus book_chunks / term / recall@5": {
-        "value": -0.1143,
+        "value": -0.1238,
         "ci95": [
-          -0.1905,
-          -0.0476
+          -0.2,
+          -0.0571
         ]
       },
       "book_chunks_no_repair minus book_chunks / definition / recall@1": {
@@ -1039,10 +1039,10 @@
         ]
       },
       "skill_reference_chunks minus book_chunks / term / recall@5": {
-        "value": -0.419,
+        "value": -0.4095,
         "ci95": [
           -0.5333,
-          -0.2952
+          -0.2857
         ]
       },
       "skill_reference_chunks minus book_chunks / definition / recall@1": {
@@ -1053,24 +1053,24 @@
         ]
       },
       "skill_reference_chunks minus book_chunks / definition / recall@5": {
-        "value": -0.419,
+        "value": -0.4286,
         "ci95": [
-          -0.5333,
-          -0.3048
+          -0.5429,
+          -0.3143
         ]
       },
       "skill_reference_files minus book_chunks / term / recall@1": {
         "value": -0.0857,
         "ci95": [
-          -0.2286,
+          -0.219,
           0.0571
         ]
       },
       "skill_reference_files minus book_chunks / term / recall@5": {
-        "value": -0.3333,
+        "value": -0.3429,
         "ci95": [
-          -0.4667,
-          -0.2
+          -0.4762,
+          -0.2095
         ]
       },
       "skill_reference_files minus book_chunks / definition / recall@1": {
@@ -1088,17 +1088,17 @@
         ]
       },
       "skill_without_definitions_files minus book_chunks / term / recall@1": {
-        "value": -0.381,
+        "value": -0.3619,
         "ci95": [
-          -0.4952,
-          -0.2571
+          -0.4762,
+          -0.2381
         ]
       },
       "skill_without_definitions_files minus book_chunks / term / recall@5": {
-        "value": -0.6571,
+        "value": -0.6667,
         "ci95": [
-          -0.7619,
-          -0.5429
+          -0.7714,
+          -0.5524
         ]
       },
       "skill_without_definitions_files minus book_chunks / definition / recall@1": {
@@ -1130,17 +1130,17 @@
         ]
       },
       "random_same_budget_files minus book_chunks / definition / recall@1": {
-        "value": -0.381,
+        "value": -0.3524,
         "ci95": [
-          -0.5048,
-          -0.2381
+          -0.4762,
+          -0.219
         ]
       },
       "random_same_budget_files minus book_chunks / definition / recall@5": {
-        "value": -0.5714,
+        "value": -0.5619,
         "ci95": [
-          -0.6857,
-          -0.4476
+          -0.6762,
+          -0.4381
         ]
       }
     }

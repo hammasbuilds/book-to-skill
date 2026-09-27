@@ -45,27 +45,27 @@
         },
         "code_blocks": {
           "blocks": 512,
-          "indented_blocks": 210,
+          "indented_blocks": 209,
           "exact": 0.3535,
           "exact_indented": 0.0
         }
       },
       "repaired": {
-        "precision": 0.9569,
-        "recall": 0.9936,
-        "f1": 0.9749,
+        "precision": 0.957,
+        "recall": 0.9937,
+        "f1": 0.975,
         "per_chapter_f1": [
           0.996,
           0.993,
           0.9956,
-          0.9911,
-          0.9845,
+          0.9914,
+          0.9846,
           0.9922,
           0.9897,
           0.9936,
           0.9945,
           0.988,
-          0.9913,
+          0.9916,
           0.9912,
           0.992,
           0.9852,
@@ -75,45 +75,45 @@
           0.9946,
           0.9981,
           0.5152,
-          0.9525
+          0.9527
         ],
         "chapter_f1_minus_pypdf_plain": {
           "value": 0.025,
           "ci95": [
-            0.0226,
+            0.0227,
             0.027
           ]
         },
-        "tokens_out": 87915,
+        "tokens_out": 87920,
         "tokens_ref": 84673,
         "defects": {
           "ligature_glyphs": 0,
           "broken_hyphenations": 0,
-          "glued_words": 16
+          "glued_words": 13
         },
         "code_blocks": {
           "blocks": 512,
-          "indented_blocks": 210,
-          "exact": 0.8555,
-          "exact_indented": 0.7381
+          "indented_blocks": 209,
+          "exact": 0.9238,
+          "exact_indented": 0.9091
         }
       },
       "without_figures": {
         "precision": 0.9472,
-        "recall": 0.9935,
-        "f1": 0.9698,
+        "recall": 0.9936,
+        "f1": 0.9699,
         "per_chapter_f1": [
           0.996,
           0.9877,
           0.987,
-          0.9911,
-          0.9816,
+          0.9914,
+          0.9817,
           0.9865,
           0.9891,
           0.9871,
           0.9945,
           0.9746,
-          0.9768,
+          0.9771,
           0.971,
           0.992,
           0.9852,
@@ -123,45 +123,45 @@
           0.9915,
           0.9981,
           0.5152,
-          0.9525
+          0.9527
         ],
         "chapter_f1_minus_pypdf_plain": {
-          "value": 0.0201,
+          "value": 0.0202,
           "ci95": [
             0.0172,
-            0.0229
+            0.023
           ]
         },
-        "tokens_out": 88814,
+        "tokens_out": 88819,
         "tokens_ref": 84673,
         "defects": {
           "ligature_glyphs": 0,
           "broken_hyphenations": 0,
-          "glued_words": 16
+          "glued_words": 13
         },
         "code_blocks": {
           "blocks": 512,
-          "indented_blocks": 210,
-          "exact": 0.8516,
-          "exact_indented": 0.7333
+          "indented_blocks": 209,
+          "exact": 0.918,
+          "exact_indented": 0.8995
         }
       },
       "without_headers": {
-        "precision": 0.9434,
-        "recall": 0.9936,
+        "precision": 0.9435,
+        "recall": 0.9937,
         "f1": 0.9679,
         "per_chapter_f1": [
           0.9876,
           0.9834,
           0.989,
-          0.9824,
-          0.9766,
+          0.9828,
+          0.9768,
           0.985,
           0.9838,
           0.9859,
           0.9881,
           0.981,
-          0.9848,
+          0.9851,
           0.985,
           0.983,
           0.9796,
@@ -171,27 +171,27 @@
           0.988,
           0.9912,
           0.5114,
-          0.9463
+          0.9465
         ],
         "chapter_f1_minus_pypdf_plain": {
-          "value": 0.0179,
+          "value": 0.018,
           "ci95": [
-            0.0158,
-            0.0198
+            0.0159,
+            0.0199
           ]
         },
-        "tokens_out": 89174,
+        "tokens_out": 89179,
         "tokens_ref": 84673,
         "defects": {
           "ligature_glyphs": 0,
           "broken_hyphenations": 0,
-          "glued_words": 16
+          "glued_words": 13
         },
         "code_blocks": {
           "blocks": 512,
-          "indented_blocks": 210,
-          "exact": 0.8555,
-          "exact_indented": 0.7381
+          "indented_blocks": 209,
+          "exact": 0.9238,
+          "exact_indented": 0.9091
         }
       },
       "without_spacing": {
@@ -237,27 +237,27 @@
         },
         "code_blocks": {
           "blocks": 512,
-          "indented_blocks": 210,
-          "exact": 0.4609,
-          "exact_indented": 0.5
+          "indented_blocks": 209,
+          "exact": 0.5195,
+          "exact_indented": 0.6459
         }
       },
       "without_code": {
-        "precision": 0.9569,
-        "recall": 0.9936,
-        "f1": 0.9749,
+        "precision": 0.957,
+        "recall": 0.9937,
+        "f1": 0.975,
         "per_chapter_f1": [
           0.996,
           0.993,
           0.9956,
-          0.9911,
-          0.9845,
+          0.9914,
+          0.9846,
           0.9922,
           0.9897,
           0.9936,
           0.9945,
           0.9883,
-          0.9913,
+          0.9916,
           0.9912,
           0.992,
           0.9852,
@@ -267,45 +267,45 @@
           0.9946,
           0.9981,
           0.5152,
-          0.9525
+          0.9527
         ],
         "chapter_f1_minus_pypdf_plain": {
           "value": 0.025,
           "ci95": [
-            0.0226,
-            0.027
+            0.0227,
+            0.0271
           ]
         },
-        "tokens_out": 87916,
+        "tokens_out": 87921,
         "tokens_ref": 84673,
         "defects": {
           "ligature_glyphs": 0,
           "broken_hyphenations": 0,
-          "glued_words": 16
+          "glued_words": 13
         },
         "code_blocks": {
           "blocks": 512,
-          "indented_blocks": 210,
+          "indented_blocks": 209,
           "exact": 0.0,
           "exact_indented": 0.0
         }
       },
       "without_reflow": {
         "precision": 0.9486,
-        "recall": 0.9908,
-        "f1": 0.9692,
+        "recall": 0.9909,
+        "f1": 0.9693,
         "per_chapter_f1": [
           0.9835,
           0.9846,
           0.9884,
-          0.9852,
-          0.9815,
+          0.9856,
+          0.9816,
           0.9868,
           0.9813,
           0.9912,
           0.9905,
           0.9848,
-          0.9874,
+          0.9877,
           0.9885,
           0.985,
           0.9817,
@@ -315,45 +315,45 @@
           0.9853,
           0.9936,
           0.5108,
-          0.9461
+          0.9463
         ],
         "chapter_f1_minus_pypdf_plain": {
-          "value": 0.0192,
+          "value": 0.0193,
           "ci95": [
             0.0169,
             0.0214
           ]
         },
-        "tokens_out": 88441,
+        "tokens_out": 88446,
         "tokens_ref": 84673,
         "defects": {
           "ligature_glyphs": 0,
           "broken_hyphenations": 257,
-          "glued_words": 15
+          "glued_words": 12
         },
         "code_blocks": {
           "blocks": 512,
-          "indented_blocks": 210,
+          "indented_blocks": 209,
           "exact": 0.0,
           "exact_indented": 0.0
         }
       },
       "without_dehyphenate": {
         "precision": 0.9486,
-        "recall": 0.9908,
-        "f1": 0.9692,
+        "recall": 0.9909,
+        "f1": 0.9693,
         "per_chapter_f1": [
           0.9835,
           0.9846,
           0.9884,
-          0.9852,
-          0.9815,
+          0.9856,
+          0.9816,
           0.9868,
           0.9813,
           0.9912,
           0.9905,
           0.9848,
-          0.9874,
+          0.9877,
           0.9885,
           0.985,
           0.9817,
@@ -363,45 +363,45 @@
           0.9853,
           0.9936,
           0.5108,
-          0.9461
+          0.9463
         ],
         "chapter_f1_minus_pypdf_plain": {
-          "value": 0.0192,
+          "value": 0.0193,
           "ci95": [
             0.0169,
             0.0214
           ]
         },
-        "tokens_out": 88441,
+        "tokens_out": 88446,
         "tokens_ref": 84673,
         "defects": {
           "ligature_glyphs": 0,
           "broken_hyphenations": 257,
-          "glued_words": 15
+          "glued_words": 12
         },
         "code_blocks": {
           "blocks": 512,
-          "indented_blocks": 210,
-          "exact": 0.8555,
-          "exact_indented": 0.7381
+          "indented_blocks": 209,
+          "exact": 0.9238,
+          "exact_indented": 0.9091
         }
       },
       "without_ligatures": {
         "precision": 0.9483,
         "recall": 0.9847,
-        "f1": 0.9661,
+        "f1": 0.9662,
         "per_chapter_f1": [
           0.9894,
           0.9856,
           0.9838,
-          0.984,
-          0.9778,
+          0.9843,
+          0.9779,
           0.9789,
           0.9834,
           0.9863,
           0.9842,
           0.9823,
-          0.9843,
+          0.9846,
           0.9883,
           0.9788,
           0.9665,
@@ -411,27 +411,27 @@
           0.9831,
           0.9919,
           0.5068,
-          0.9472
+          0.9474
         ],
         "chapter_f1_minus_pypdf_plain": {
           "value": 0.0163,
           "ci95": [
-            0.0143,
+            0.0144,
             0.0181
           ]
         },
-        "tokens_out": 87921,
+        "tokens_out": 87926,
         "tokens_ref": 84673,
         "defects": {
           "ligature_glyphs": 786,
           "broken_hyphenations": 0,
-          "glued_words": 16
+          "glued_words": 13
         },
         "code_blocks": {
           "blocks": 512,
-          "indented_blocks": 210,
-          "exact": 0.8555,
-          "exact_indented": 0.7381
+          "indented_blocks": 209,
+          "exact": 0.9238,
+          "exact_indented": 0.9091
         }
       },
       "no_repairs": {
@@ -477,7 +477,7 @@
         },
         "code_blocks": {
           "blocks": 512,
-          "indented_blocks": 210,
+          "indented_blocks": 209,
           "exact": 0.0,
           "exact_indented": 0.0
         }
@@ -523,8 +523,8 @@
         },
         "code_blocks": {
           "blocks": 243,
-          "indented_blocks": 181,
-          "exact": 0.1564,
+          "indented_blocks": 126,
+          "exact": 0.3457,
           "exact_indented": 0.0
         }
       },
@@ -539,34 +539,34 @@
           0.9712,
           0.8966,
           0.9702,
-          0.9698,
+          0.9702,
           0.9779,
           0.9846,
           0.9667,
           0.9927,
           0.9665,
           0.9743,
-          0.9583
+          0.958
         ],
         "chapter_f1_minus_pypdf_plain": {
           "value": 0.0438,
           "ci95": [
-            0.0383,
-            0.0498
+            0.0382,
+            0.0499
           ]
         },
-        "tokens_out": 68292,
+        "tokens_out": 68294,
         "tokens_ref": 67853,
         "defects": {
           "ligature_glyphs": 0,
           "broken_hyphenations": 0,
-          "glued_words": 2
+          "glued_words": 1
         },
         "code_blocks": {
           "blocks": 243,
-          "indented_blocks": 181,
-          "exact": 0.3374,
-          "exact_indented": 0.2376
+          "indented_blocks": 126,
+          "exact": 0.8107,
+          "exact_indented": 0.8413
         }
       },
       "without_figures": {
@@ -575,19 +575,19 @@
         "f1": 0.9404,
         "per_chapter_f1": [
           0.9982,
-          0.952,
+          0.9518,
           0.9509,
           0.9216,
-          0.7889,
+          0.7891,
           0.9456,
-          0.9392,
+          0.9396,
           0.9701,
           0.9773,
           0.9348,
           0.9927,
           0.9239,
-          0.9323,
-          0.929
+          0.9324,
+          0.9287
         ],
         "chapter_f1_minus_pypdf_plain": {
           "value": 0.0136,
@@ -596,18 +596,18 @@
             0.0221
           ]
         },
-        "tokens_out": 72421,
+        "tokens_out": 72427,
         "tokens_ref": 67853,
         "defects": {
           "ligature_glyphs": 0,
           "broken_hyphenations": 1,
-          "glued_words": 12
+          "glued_words": 11
         },
         "code_blocks": {
           "blocks": 243,
-          "indented_blocks": 181,
-          "exact": 0.3004,
-          "exact_indented": 0.1989
+          "indented_blocks": 126,
+          "exact": 0.7078,
+          "exact_indented": 0.7302
         }
       },
       "without_headers": {
@@ -621,34 +621,34 @@
           0.9591,
           0.8861,
           0.9596,
-          0.9586,
+          0.959,
           0.9701,
           0.9745,
           0.9557,
           0.9852,
           0.9556,
           0.9628,
-          0.948
+          0.9477
         ],
         "chapter_f1_minus_pypdf_plain": {
           "value": 0.0335,
           "ci95": [
-            0.0285,
+            0.0284,
             0.0392
           ]
         },
-        "tokens_out": 69756,
+        "tokens_out": 69758,
         "tokens_ref": 67853,
         "defects": {
           "ligature_glyphs": 0,
           "broken_hyphenations": 0,
-          "glued_words": 2
+          "glued_words": 1
         },
         "code_blocks": {
           "blocks": 243,
-          "indented_blocks": 181,
-          "exact": 0.3374,
-          "exact_indented": 0.2376
+          "indented_blocks": 126,
+          "exact": 0.8107,
+          "exact_indented": 0.8413
         }
       },
       "without_spacing": {
@@ -687,9 +687,9 @@
         },
         "code_blocks": {
           "blocks": 243,
-          "indented_blocks": 181,
-          "exact": 0.3374,
-          "exact_indented": 0.2376
+          "indented_blocks": 126,
+          "exact": 0.8107,
+          "exact_indented": 0.8413
         }
       },
       "without_code": {
@@ -703,32 +703,32 @@
           0.9712,
           0.8966,
           0.9702,
-          0.9698,
+          0.9702,
           0.9779,
           0.9846,
           0.9667,
           0.9927,
           0.9665,
           0.9743,
-          0.9583
+          0.958
         ],
         "chapter_f1_minus_pypdf_plain": {
           "value": 0.0438,
           "ci95": [
-            0.0383,
-            0.0498
+            0.0382,
+            0.0499
           ]
         },
-        "tokens_out": 68292,
+        "tokens_out": 68294,
         "tokens_ref": 67853,
         "defects": {
           "ligature_glyphs": 0,
           "broken_hyphenations": 0,
-          "glued_words": 2
+          "glued_words": 1
         },
         "code_blocks": {
           "blocks": 243,
-          "indented_blocks": 181,
+          "indented_blocks": 126,
           "exact": 0.0,
           "exact_indented": 0.0
         }
@@ -744,32 +744,32 @@
           0.9609,
           0.874,
           0.9617,
-          0.9577,
+          0.9581,
           0.9708,
           0.9769,
           0.9598,
           0.9843,
           0.9584,
           0.9665,
-          0.95
+          0.9497
         ],
         "chapter_f1_minus_pypdf_plain": {
           "value": 0.0344,
           "ci95": [
             0.0296,
-            0.0393
+            0.0394
           ]
         },
-        "tokens_out": 68870,
+        "tokens_out": 68872,
         "tokens_ref": 67853,
         "defects": {
           "ligature_glyphs": 0,
           "broken_hyphenations": 289,
-          "glued_words": 3
+          "glued_words": 2
         },
         "code_blocks": {
           "blocks": 243,
-          "indented_blocks": 181,
+          "indented_blocks": 126,
           "exact": 0.0,
           "exact_indented": 0.0
         }
@@ -785,34 +785,34 @@
           0.9609,
           0.874,
           0.9617,
-          0.9577,
+          0.9581,
           0.9708,
           0.9769,
           0.9598,
           0.9843,
           0.9584,
           0.9665,
-          0.95
+          0.9497
         ],
         "chapter_f1_minus_pypdf_plain": {
           "value": 0.0344,
           "ci95": [
             0.0296,
-            0.0393
+            0.0394
           ]
         },
-        "tokens_out": 68870,
+        "tokens_out": 68872,
         "tokens_ref": 67853,
         "defects": {
           "ligature_glyphs": 0,
           "broken_hyphenations": 289,
-          "glued_words": 3
+          "glued_words": 2
         },
         "code_blocks": {
           "blocks": 243,
-          "indented_blocks": 181,
-          "exact": 0.3374,
-          "exact_indented": 0.2376
+          "indented_blocks": 126,
+          "exact": 0.8107,
+          "exact_indented": 0.8413
         }
       },
       "without_ligatures": {
@@ -826,14 +826,14 @@
           0.96,
           0.4902,
           0.9636,
-          0.9611,
+          0.9615,
           0.9718,
           0.9561,
           0.9536,
           0.9794,
           0.9565,
           0.9633,
-          0.9492
+          0.949
         ],
         "chapter_f1_minus_pypdf_plain": {
           "value": 0.0036,
@@ -842,18 +842,18 @@
             0.0337
           ]
         },
-        "tokens_out": 68294,
+        "tokens_out": 68296,
         "tokens_ref": 67853,
         "defects": {
           "ligature_glyphs": 846,
           "broken_hyphenations": 0,
-          "glued_words": 2
+          "glued_words": 1
         },
         "code_blocks": {
           "blocks": 243,
-          "indented_blocks": 181,
-          "exact": 0.3374,
-          "exact_indented": 0.2376
+          "indented_blocks": 126,
+          "exact": 0.8107,
+          "exact_indented": 0.8413
         }
       },
       "no_repairs": {
@@ -892,8 +892,413 @@
         },
         "code_blocks": {
           "blocks": 243,
-          "indented_blocks": 181,
+          "indented_blocks": 126,
           "exact": 0.0,
+          "exact_indented": 0.0
+        }
+      }
+    }
+  },
+  "progit": {
+    "chapters_compared": 13,
+    "systems": {
+      "pypdf_plain": {
+        "precision": 0.9959,
+        "recall": 0.9989,
+        "f1": 0.9974,
+        "per_chapter_f1": [
+          0.9972,
+          0.9981,
+          0.9972,
+          0.9988,
+          0.9978,
+          0.9931,
+          0.997,
+          0.9988,
+          0.9988,
+          0.9988,
+          0.997,
+          0.9923,
+          0.9985
+        ],
+        "chapter_f1_minus_pypdf_plain": {
+          "value": 0.0,
+          "ci95": [
+            0.0,
+            0.0
+          ]
+        },
+        "tokens_out": 186240,
+        "tokens_ref": 185690,
+        "defects": {
+          "ligature_glyphs": 0,
+          "broken_hyphenations": 1,
+          "glued_words": 0
+        },
+        "code_blocks": {
+          "blocks": 695,
+          "indented_blocks": 291,
+          "exact": 0.5784,
+          "exact_indented": 0.3849
+        }
+      },
+      "repaired": {
+        "precision": 0.9984,
+        "recall": 0.9987,
+        "f1": 0.9986,
+        "per_chapter_f1": [
+          0.9986,
+          0.9993,
+          0.9989,
+          0.9999,
+          0.9991,
+          0.9948,
+          0.9983,
+          0.9998,
+          0.9999,
+          0.9999,
+          0.9985,
+          0.993,
+          0.998
+        ],
+        "chapter_f1_minus_pypdf_plain": {
+          "value": 0.0011,
+          "ci95": [
+            0.0008,
+            0.0014
+          ]
+        },
+        "tokens_out": 185751,
+        "tokens_ref": 185690,
+        "defects": {
+          "ligature_glyphs": 0,
+          "broken_hyphenations": 0,
+          "glued_words": 0
+        },
+        "code_blocks": {
+          "blocks": 695,
+          "indented_blocks": 291,
+          "exact": 0.8144,
+          "exact_indented": 0.7526
+        }
+      },
+      "without_figures": {
+        "precision": 0.9984,
+        "recall": 0.9987,
+        "f1": 0.9986,
+        "per_chapter_f1": [
+          0.9986,
+          0.9993,
+          0.9989,
+          0.9999,
+          0.9991,
+          0.9948,
+          0.9983,
+          0.9998,
+          0.9999,
+          0.9999,
+          0.9985,
+          0.993,
+          0.998
+        ],
+        "chapter_f1_minus_pypdf_plain": {
+          "value": 0.0011,
+          "ci95": [
+            0.0008,
+            0.0014
+          ]
+        },
+        "tokens_out": 185751,
+        "tokens_ref": 185690,
+        "defects": {
+          "ligature_glyphs": 0,
+          "broken_hyphenations": 0,
+          "glued_words": 0
+        },
+        "code_blocks": {
+          "blocks": 695,
+          "indented_blocks": 291,
+          "exact": 0.8144,
+          "exact_indented": 0.7526
+        }
+      },
+      "without_headers": {
+        "precision": 0.9958,
+        "recall": 0.9988,
+        "f1": 0.9973,
+        "per_chapter_f1": [
+          0.9972,
+          0.9981,
+          0.9972,
+          0.9988,
+          0.9978,
+          0.9931,
+          0.9969,
+          0.9988,
+          0.9988,
+          0.9988,
+          0.997,
+          0.9919,
+          0.9968
+        ],
+        "chapter_f1_minus_pypdf_plain": {
+          "value": -0.0002,
+          "ci95": [
+            -0.0004,
+            0.0
+          ]
+        },
+        "tokens_out": 186239,
+        "tokens_ref": 185690,
+        "defects": {
+          "ligature_glyphs": 0,
+          "broken_hyphenations": 0,
+          "glued_words": 0
+        },
+        "code_blocks": {
+          "blocks": 695,
+          "indented_blocks": 291,
+          "exact": 0.7266,
+          "exact_indented": 0.6598
+        }
+      },
+      "without_spacing": {
+        "precision": 0.9984,
+        "recall": 0.9987,
+        "f1": 0.9986,
+        "per_chapter_f1": [
+          0.9986,
+          0.9993,
+          0.9989,
+          0.9999,
+          0.9991,
+          0.9948,
+          0.9983,
+          0.9998,
+          0.9999,
+          0.9999,
+          0.9985,
+          0.9927,
+          0.9983
+        ],
+        "chapter_f1_minus_pypdf_plain": {
+          "value": 0.0011,
+          "ci95": [
+            0.0008,
+            0.0014
+          ]
+        },
+        "tokens_out": 185753,
+        "tokens_ref": 185690,
+        "defects": {
+          "ligature_glyphs": 0,
+          "broken_hyphenations": 0,
+          "glued_words": 0
+        },
+        "code_blocks": {
+          "blocks": 695,
+          "indented_blocks": 291,
+          "exact": 0.5007,
+          "exact_indented": 0.0
+        }
+      },
+      "without_code": {
+        "precision": 0.9984,
+        "recall": 0.9987,
+        "f1": 0.9986,
+        "per_chapter_f1": [
+          0.9986,
+          0.9993,
+          0.9989,
+          0.9999,
+          0.9991,
+          0.9948,
+          0.9983,
+          0.9998,
+          0.9999,
+          0.9999,
+          0.9985,
+          0.993,
+          0.998
+        ],
+        "chapter_f1_minus_pypdf_plain": {
+          "value": 0.0011,
+          "ci95": [
+            0.0008,
+            0.0014
+          ]
+        },
+        "tokens_out": 185751,
+        "tokens_ref": 185690,
+        "defects": {
+          "ligature_glyphs": 0,
+          "broken_hyphenations": 0,
+          "glued_words": 0
+        },
+        "code_blocks": {
+          "blocks": 695,
+          "indented_blocks": 291,
+          "exact": 0.0014,
+          "exact_indented": 0.0
+        }
+      },
+      "without_reflow": {
+        "precision": 0.9984,
+        "recall": 0.9988,
+        "f1": 0.9986,
+        "per_chapter_f1": [
+          0.9986,
+          0.9993,
+          0.9989,
+          0.9999,
+          0.9991,
+          0.9948,
+          0.9983,
+          0.9998,
+          0.9999,
+          0.9999,
+          0.9985,
+          0.9934,
+          0.998
+        ],
+        "chapter_f1_minus_pypdf_plain": {
+          "value": 0.0012,
+          "ci95": [
+            0.0008,
+            0.0014
+          ]
+        },
+        "tokens_out": 185753,
+        "tokens_ref": 185690,
+        "defects": {
+          "ligature_glyphs": 0,
+          "broken_hyphenations": 1,
+          "glued_words": 0
+        },
+        "code_blocks": {
+          "blocks": 695,
+          "indented_blocks": 291,
+          "exact": 0.0014,
+          "exact_indented": 0.0
+        }
+      },
+      "without_dehyphenate": {
+        "precision": 0.9984,
+        "recall": 0.9988,
+        "f1": 0.9986,
+        "per_chapter_f1": [
+          0.9986,
+          0.9993,
+          0.9989,
+          0.9999,
+          0.9991,
+          0.9948,
+          0.9983,
+          0.9998,
+          0.9999,
+          0.9999,
+          0.9985,
+          0.9934,
+          0.998
+        ],
+        "chapter_f1_minus_pypdf_plain": {
+          "value": 0.0012,
+          "ci95": [
+            0.0008,
+            0.0014
+          ]
+        },
+        "tokens_out": 185753,
+        "tokens_ref": 185690,
+        "defects": {
+          "ligature_glyphs": 0,
+          "broken_hyphenations": 1,
+          "glued_words": 0
+        },
+        "code_blocks": {
+          "blocks": 695,
+          "indented_blocks": 291,
+          "exact": 0.8144,
+          "exact_indented": 0.7526
+        }
+      },
+      "without_ligatures": {
+        "precision": 0.9984,
+        "recall": 0.9987,
+        "f1": 0.9986,
+        "per_chapter_f1": [
+          0.9986,
+          0.9993,
+          0.9989,
+          0.9999,
+          0.9991,
+          0.9948,
+          0.9983,
+          0.9998,
+          0.9999,
+          0.9999,
+          0.9985,
+          0.993,
+          0.998
+        ],
+        "chapter_f1_minus_pypdf_plain": {
+          "value": 0.0011,
+          "ci95": [
+            0.0008,
+            0.0014
+          ]
+        },
+        "tokens_out": 185751,
+        "tokens_ref": 185690,
+        "defects": {
+          "ligature_glyphs": 0,
+          "broken_hyphenations": 0,
+          "glued_words": 0
+        },
+        "code_blocks": {
+          "blocks": 695,
+          "indented_blocks": 291,
+          "exact": 0.8144,
+          "exact_indented": 0.7526
+        }
+      },
+      "no_repairs": {
+        "precision": 0.9958,
+        "recall": 0.9988,
+        "f1": 0.9973,
+        "per_chapter_f1": [
+          0.9972,
+          0.9981,
+          0.9972,
+          0.9988,
+          0.9978,
+          0.9931,
+          0.9969,
+          0.9988,
+          0.9988,
+          0.9988,
+          0.997,
+          0.992,
+          0.9971
+        ],
+        "chapter_f1_minus_pypdf_plain": {
+          "value": -0.0001,
+          "ci95": [
+            -0.0004,
+            0.0
+          ]
+        },
+        "tokens_out": 186243,
+        "tokens_ref": 185690,
+        "defects": {
+          "ligature_glyphs": 0,
+          "broken_hyphenations": 1,
+          "glued_words": 0
+        },
+        "code_blocks": {
+          "blocks": 695,
+          "indented_blocks": 291,
+          "exact": 0.0014,
           "exact_indented": 0.0
         }
       }
