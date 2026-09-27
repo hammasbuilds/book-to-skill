@@ -11,12 +11,6 @@
       "kerning_joins": 5,
       "body_size": 10.0
     },
-    "gold": {
-      "glossary_terms": 220,
-      "no_bold_in_body": 36,
-      "not_in_pdf_revision": 0,
-      "questions": 184
-    },
     "skill": {
       "reference_words": 13400,
       "skill_md_words": 503,
@@ -24,64 +18,20 @@
       "book_code_blocks": 517,
       "in_skill": 76
     },
-    "controls": {
-      "skill": {
-        "words": 13400,
-        "kept": 0.5272,
-        "random_same_budget_mean": 0.2886,
-        "random_same_budget_sd": 0.0312,
-        "random_same_budget_min": 0.2446,
-        "random_same_budget_max": 0.3533,
-        "seeds": 20
+    "questions": {
+      "glossary": {
+        "glossary_terms": 220,
+        "no_bold_in_body": 36,
+        "not_in_pdf_revision": 0,
+        "questions": 184
       },
-      "skill_without_definitions": {
-        "words": 10105,
-        "kept": 0.2337,
-        "random_same_budget_mean": 0.2144,
-        "random_same_budget_sd": 0.0346,
-        "random_same_budget_min": 0.1685,
-        "random_same_budget_max": 0.2989,
-        "seeds": 20
+      "index": {
+        "terms_with_anchors": 722,
+        "not_in_pdf_revision": 0,
+        "questions": 722,
+        "test": 144,
+        "also_glossary_terms": 159
       }
-    },
-    "definition_rule": {
-      "book_sentences": 3658,
-      "book_sentences_matching": 200,
-      "gold": 184,
-      "gold_matching": 71,
-      "kept_by_skill_matching": 65,
-      "kept_by_skill_not_matching": 32,
-      "kept_by_definitions_section": 65,
-      "random_kept_not_matching_by_seed": [
-        31,
-        30,
-        33,
-        26,
-        31,
-        35,
-        32,
-        26,
-        33,
-        34,
-        29,
-        31,
-        27,
-        30,
-        29,
-        31,
-        26,
-        36,
-        33,
-        30
-      ],
-      "random_same_budget_keeps_not_matching_mean": 0.2712,
-      "random_same_budget_keeps_not_matching_sd": 0.0259,
-      "gold_match_rate": 0.3859,
-      "book_sentence_match_rate": 0.0547,
-      "enrichment": 7.1,
-      "skill_keeps_matching": 0.9155,
-      "skill_keeps_not_matching": 0.2832,
-      "definitions_section_keeps": 0.3533
     }
   },
   "thinkstats2": {
@@ -96,12 +46,6 @@
       "kerning_joins": 4,
       "body_size": 12.0
     },
-    "gold": {
-      "glossary_terms": 136,
-      "no_bold_in_body": 30,
-      "not_in_pdf_revision": 1,
-      "questions": 105
-    },
     "skill": {
       "reference_words": 9679,
       "skill_md_words": 360,
@@ -109,64 +53,20 @@
       "book_code_blocks": 247,
       "in_skill": 49
     },
-    "controls": {
-      "skill": {
-        "words": 9679,
-        "kept": 0.5143,
-        "random_same_budget_mean": 0.2448,
-        "random_same_budget_sd": 0.0364,
-        "random_same_budget_min": 0.1619,
-        "random_same_budget_max": 0.3238,
-        "seeds": 20
+    "questions": {
+      "glossary": {
+        "glossary_terms": 136,
+        "no_bold_in_body": 30,
+        "not_in_pdf_revision": 1,
+        "questions": 105
       },
-      "skill_without_definitions": {
-        "words": 7416,
-        "kept": 0.1905,
-        "random_same_budget_mean": 0.1843,
-        "random_same_budget_sd": 0.039,
-        "random_same_budget_min": 0.1048,
-        "random_same_budget_max": 0.2857,
-        "seeds": 20
+      "index": {
+        "terms_with_anchors": 417,
+        "not_in_pdf_revision": 0,
+        "questions": 417,
+        "test": 76,
+        "also_glossary_terms": 98
       }
-    },
-    "definition_rule": {
-      "book_sentences": 2714,
-      "book_sentences_matching": 109,
-      "gold": 105,
-      "gold_matching": 41,
-      "kept_by_skill_matching": 40,
-      "kept_by_skill_not_matching": 14,
-      "kept_by_definitions_section": 40,
-      "random_kept_not_matching_by_seed": [
-        18,
-        15,
-        12,
-        16,
-        16,
-        16,
-        23,
-        18,
-        7,
-        16,
-        15,
-        18,
-        10,
-        14,
-        17,
-        13,
-        11,
-        13,
-        11,
-        14
-      ],
-      "random_same_budget_keeps_not_matching_mean": 0.2289,
-      "random_same_budget_keeps_not_matching_sd": 0.0551,
-      "gold_match_rate": 0.3905,
-      "book_sentence_match_rate": 0.0402,
-      "enrichment": 9.7,
-      "skill_keeps_matching": 0.9756,
-      "skill_keeps_not_matching": 0.2188,
-      "definitions_section_keeps": 0.381
     }
   },
   "progit": {
@@ -187,6 +87,15 @@
       "book_words": 135907,
       "book_code_blocks": 705,
       "in_skill": 34
+    },
+    "questions": {
+      "index": {
+        "terms_with_anchors": 209,
+        "not_in_pdf_revision": 0,
+        "questions": 209,
+        "test": 41,
+        "also_glossary_terms": 0
+      }
     }
   }
 }

@@ -1,5 +1,5 @@
 <h1 align="center">book-to-skill (PDF · BM25 · Claude Code skills · Ollama)</h1>
-<p align="center"><i>Turn a technical book PDF into an agent skill, and measure how much of the book the skill still knows</i></p>
+<p align="center"><i>Turn a technical book PDF into an agent skill, and measure how much of the book the skill still knows (outside definitions: no more than random sentences)</i></p>
 
 <p align="center">
   <a href="#the-through-line">The through-line</a> &middot;
@@ -12,7 +12,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/python-3.11%2B-blue" alt="python">
-  <img src="https://img.shields.io/badge/tests-122%20passing-success" alt="tests">
+  <img src="https://img.shields.io/badge/tests-139%20passing-success" alt="tests">
   <img src="https://img.shields.io/badge/runtime%20deps-pypdf%20only-success" alt="dependencies">
   <img src="https://img.shields.io/badge/model%20arm-queued%2C%20not%20run-orange" alt="model arm">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="license"></a>
@@ -31,7 +31,7 @@ flowchart LR
     C --> D["chapters and sections<br/>from font sizes"]
     D --> E["skill package<br/>SKILL.md + one reference<br/>file per chapter"]
     D --> F["200-word chunks<br/>(RAG baseline)"]
-    E --> G["BM25 from scratch, equal words read:<br/>is the defining sentence<br/>still findable?"]
+    E --> G["author's index anchors vs<br/>skill, random, book:<br/>is the paragraph still there?"]
     F --> G
 
     style G fill:#2563eb,color:#fff
@@ -42,70 +42,78 @@ builds the whole pipeline without a model (PDF to text, text to structure, struc
 Claude Code skill), then asks the question the skill format hides: when the agent opens the
 skill, is the passage that answers its question still in there?
 
-It is scored on 289 definition questions from two openly licensed books, with gold passages
-taken from the author's own LaTeX markup rather than from anything this pipeline produced,
-and against a text edition of each book that the PDF was not involved in making.
+The primary question set is the books' own **back-of-book index**: 1,348 terms from three
+openly licensed books and two toolchains, each with the paragraph(s) where the author placed
+the index anchor as its gold evidence. It depends neither on this pipeline nor on how the
+skill writer picks sentences. A fixed 20% of terms (261) is a held-out test split. Extraction
+is scored against an HTML edition of each book that the PDF was not involved in making.
 
-> **The skill beats chance only on the questions its own selection rule already points at.
-> At 21% of the book's words, the extractive skill keeps the defining sentence for 52% of
-> questions against 27% for random sentences at the same budget. But its defining-phrase
-> regex matches 39% of gold sentences and only 5% of book sentences (8x enrichment); it keeps
-> 94% of those, and on the other 61% of questions it keeps 26%, the same as random (26%).
-> Reading the same 1,000 words, BM25 reaches the gold passage 88% of the time over the book
-> and 51% over the skill.**
+> **Outside definitions, the skill keeps no more of the book than random sentences do; on the
+> held-out index terms it keeps slightly less.** At 21% of each chapter's words, the
+> extractive skill still holds the author's indexed paragraph for 39.5% of test terms; random
+> sentences at the same budget hold it for 44.3% (sd 2.5 over 20 seeds): −4.9 points, 95% CI
+> [−11.0, +1.0] resampling chapters. Its only advantage is its definitions regex: on the 16%
+> of terms whose gold paragraph contains a defining phrase it keeps 95% (random 58%); on the
+> other 84% it keeps 28.8% against random's 41.7% (−12.9 points, [−20.0, −6.2]). Reading the
+> same 1,000 retrieved words, BM25 reaches the indexed paragraph 67% of the time over the
+> book and 30% over the skill.
 
 ## Findings
 
 Every number below is in a file under [`results/`](results/), produced on this machine by
-`book-to-skill experiments`. Intervals are 95% bootstrap intervals over questions (2,000
-resamples); differences are paired on the same questions. Random controls are the mean over
-20 seeds, with the standard deviation across seeds.
+`book-to-skill experiments`. Primary numbers are on the **index test split** (261 terms,
+never used while building anything); the dev split (1,087 terms) and every other view are in
+the same file. Intervals are 95% bootstraps over terms (2,000 resamples) unless marked
+"by chapter", which resamples whole chapters because terms from one chapter share a skill
+file. Random controls are the mean over 20 seeds at the variant's own word budget.
 
 | | Measured on | Result | File |
 |---|---|---|---|
-| **Does a skill keep the evidence?** | 289 questions, 2 books | Gold sentence present in the skill for **52.2%** [46.4, 58.1] of questions; random sentences at the same budget keep **27.3%** (sd 2.4); the skill without its definitions section keeps **21.8%**, random at *its* budget **20.4%** (sd 2.6), i.e. chance | `retrieval_pooled.json` `controls` |
-| **How much of that is the selection rule?** | same | The definitions regex matches **38.8%** of gold sentences vs **4.8%** of book sentences. Matched: skill keeps **93.8%**. Unmatched: skill **26.0%**, random at the same budget **25.6%** (sd 2.5) | `retrieval_pooled.json` `definition_rule` |
-| **RAG over the book vs over the skill, equal reading** | same | gold passage within the first 1,000 retrieved words: book chunks **88.2%**, skill in equal-size chunks **50.9%** (paired **−37.4 points** [−44.3, −30.5]), whole skill files **43.9%** | `retrieval_pooled.json` |
-| **Does layout repair matter downstream?** | same | Without repair 10% of gold sentences are no longer findable as text, and recall@1000 words falls from **88.2%** to **74.7%** (paired **−13.5 points** [−18.0, −9.0]) | `retrieval_pooled.json` |
+| **Does the skill keep the evidence?** | index test, 261 terms, 3 books | Skill **39.5%** [33.3, 45.2]; random at the same budget **44.3%** (sd 2.5); difference **−4.9 points**, by chapter [−11.0, +1.0]. Dev split: 45.2% vs 46.1%, −1.0 [−4.1, +2.5] | `index_eval.json` → `pooled.test.controls` |
+| **…without the glossary terms** | index test, 213 terms | Skill **32.9%** vs random **41.1%**: **−8.2 points**, by chapter [−15.4, −1.3] | `pooled.test_not_glossary_terms` |
+| **Where the skill wins** | index test | Definitions regex matches 16.1% of gold paragraphs vs 3.3% of book sentences. Matched (42): skill **95.2%**, random 58.1%. Unmatched (219): skill **28.8%**, random **41.7%**, **−12.9 points** [−20.0, −6.2] | `…controls.definition_rule` |
+| **RAG over the book vs the skill, equal reading** | index test | Indexed paragraph within the first 1,000 retrieved words: book chunks **67.1%** [61.3, 72.4], skill chunks **29.9%** [24.1, 35.6] (paired **−37.2 points** [−44.1, −30.3]), whole skill files **19.9%**, random-sentence chunks 26.4% | `pooled.test.corpora` |
+| **Glossary set (secondary, 289 questions)** | bold-term gold sentences, 2 books | Skill **52.2%** vs random **27.3%**; but the regex matches 38.8% of these gold sentences (8x enrichment), and on the unmatched 177 the skill keeps 26.0% vs random 25.6% | `glossary_eval.json` |
+| **Does layout repair matter downstream?** | index, all 1,348 | Without repair 6.6% of indexed paragraphs are no longer findable as text; recall@1,000 words **69.7% → 65.5%** (paired −4.2 [−6.1, −2.4]). Glossary set: 88.2% → 74.7% | `index_eval.json`, `glossary_eval.json` |
 | **Extraction quality** | 48 chapters, 3 books, vs each book's HTML edition | token F1 vs pypdf's own `extract_text`: Think Python **0.950 → 0.975**, Think Stats **0.927 → 0.971**, Pro Git **0.997 → 0.999** | `extraction.json` |
 | **Code listings** | 1,450 multi-line listings | recovered verbatim with indentation: Think Python **35% → 92%**, Think Stats **35% → 81%**, Pro Git **58% → 81%**; of the indented ones pypdf recovers 0%, 0% and 38% | `extraction.json` |
 | **Structure vs the real table of contents** | 48 chapters, 459 sections | font-size detection finds **48/48** chapters and **459/459** sections (one extra section in Think Python), as good as reading the PDF's own bookmarks | `structure.json` |
 
 ### What the numbers say
 
-**The skill's advantage over chance is its definitions regex, and that regex partly
-reproduces how the questions were chosen.** Gold sentences are the ones holding a term the
-author set in bold, and authors bold a term where they define it ("... is called a
-*variable*"). The skill writer never looks at bold type, but its "Key definitions" section
-is filled by a regex for defining phrases ("is called", "refers to", "is defined as" ...),
-which matches 38.8% of gold sentences and 4.8% of all book sentences: an 8x enrichment. The
-definitions section alone contains 36.3% of gold sentences. Split the questions by whether
-the regex matches the gold sentence and the picture is plain: on matched questions the skill
-keeps 93.8%; on unmatched ones it keeps 26.0%, indistinguishable from random sentences at
-the same budget (25.6%, sd 2.5 over 20 seeds). Remove the definitions section and the skill
-is at chance overall (21.8% vs 20.4%, sd 2.6). So the question set is not built *from* the
-pipeline, but it and the skill writer share a proxy, and the 52% headline should be read as
-"a definitions section finds definitions", not as general evidence retention. Questions of
-another kind would see roughly the compression rate.
+**An extractive skill is a definitions index plus a random-ish sample, and the sample is worse
+than random.** The writer keeps, per chapter, two lead sentences per section, up to twelve
+sentences matching a defining-phrase regex ("is called", "refers to", "is defined as" ...),
+up to four worked examples, and "when to use" topics. On terms whose indexed paragraph
+contains such a phrase it keeps the evidence 95% of the time. Everywhere else it keeps it
+28.8% of the time, and random sentences at the same word budget keep 41.7%: lead sentences
+cluster at section starts, while an author's index anchors are spread through the text, so a
+uniform sample covers more of them. Over all test terms the two effects roughly cancel
+(−4.9 points, CI crossing zero); with glossary terms removed, the loss is clear (−8.2).
 
-*Correction to an earlier version of this README*, which said the ablated skill (21.8%) fell
-*below* a random control of 29.8%. That control used the full skill's larger budget (23,472
-vs 17,521 words) and a single seed; budget-matched and over 20 seeds the ablation is at
-chance, and the full-budget control is 27.3%, not 29.8%.
+**The glossary result was the proxy talking.** On the secondary glossary set the skill beat
+random by 25 points (52.2% vs 27.3%). That set's gold sentences are where the author set a
+term in bold, i.e. where it is defined, which is exactly what the regex looks for: it
+matches 38.8% of those gold sentences and 4.8% of book sentences. On the glossary questions
+the regex does not match, the skill is at chance (26.0% vs 25.6%). The independent index
+set confirms the reading: the definitions section is the only part that beats chance.
 
-**At equal reading cost the gap is wider than top-k suggested.** Book chunks average 148
-words, the skill's reference files 659, so "top 5" meant ~740 words from the book and ~3,300
-from the skill. Scoring instead whether the gold passage lies within the first N retrieved
-words (the unit that crosses N is cut at N): at 1,000 words the book reaches 88.2%, the skill
-chunked the same way as the book (163 words per chunk) 50.9%, and whole skill files 43.9%;
-at 250 words whole files manage 13.8%. The skill's ceiling is the 52.2% whose evidence
-survived at all, and chunked skill retrieval gets within 1.4 points of it by 1,000 words.
+**Per book it is at chance or below, except Pro Git, where it is uncertain.** All index
+terms, CI by chapter: Think Python +0.1 points [−3.3, +3.7], Think Stats −8.3 [−13.4, −3.7],
+Pro Git +5.2 [−4.1, +15.1]. Pro Git is the book where the regex matches least (5% of gold
+paragraphs), so the regex cannot explain its sign; but its test split (41 terms) goes the
+other way (−4.8 [−19.4, +12.6]) and both intervals include zero, so it is not evidence that
+the skill beats random there.
 
-**The comparison between corpora does not hinge on the matching threshold.** A unit
-"contains" the gold sentence when it holds at least 60% of the sentence's word trigrams. At
-40% and 80% the order of the corpora is unchanged; the skill's count moves by one question,
-the random control's by six, the unrepaired chunks' by thirteen, because broken words cut
-trigrams (`evidence_threshold_sensitivity`).
+**At equal reading cost, retrieval over the skill is less than half as good as over the book.**
+Book chunks average 157 words, skill chunks 164, whole skill files 668. Scoring whether the
+indexed paragraph lies within the first N retrieved words (the unit crossing N is cut at N):
+at 1,000 words the book reaches 67.1% of test terms, the chunked skill 29.9%, whole files
+19.9%. The skill's ceiling is the 39.5% whose evidence survived at all.
+
+**The matching threshold does not drive any of this.** A unit holds the evidence when it
+contains at least 60% of the word trigrams of any gold sentence. At 40% and 80% the order of
+the corpora is unchanged (`evidence_retained_by_threshold` in every view).
 
 **Layout repair is a TeX problem.** On the two pdflatex books, repair lifts chapter token
 F1 by 2.5 [2.3, 2.7] and 4.4 [3.8, 5.0] points, removes all 1,641 ligature glyphs and 545
@@ -117,60 +125,57 @@ removing page-number footers, and matters only for listings (58% → 81%). The s
 
 **Structure detection on these born-digital books is close to solved, and that is not the
 interesting part.** Font size alone recovers every chapter and section of all three books,
-matching the PDF outline. Two of the three books needed a rule to get there: Think Python
-sets "Chapter 7" as a separate larger line, and Pro Git prints no chapter numbers at all, so
-unnumbered title-level headings with at least two sections are numbered in order. Without
-layout repair, figure labels and running headers leak into headings: 19/21, 13/14 and 12/13
-chapters are found, and 29, 18 and 1 section titles are lost. Outside these three books it
-can fail (a thesis whose title page read as the only numbered chapter produced a one-file
-skill; see Problems hit), so `convert` now refuses when numbered chapters hold under 20% of
-the text.
+matching the PDF outline. Think Python sets "Chapter 7" as a separate larger line, and Pro
+Git prints no chapter numbers, so unnumbered title-level headings with at least two sections
+are numbered in order. Without layout repair 19/21, 13/14 and 12/13 chapters are found.
+Outside these books it can fail (a thesis whose title page read as the only numbered chapter
+produced a one-file skill; see Problems hit), so `convert` refuses when numbered chapters
+hold under 20% of the text.
 
-**Not a finding.** Book chunks contain 100% of the gold sentences because the question set
-was filtered to sentences that occur in the extracted PDF text: the LaTeX on GitHub and the
-published PDF are different revisions, and one Think Stats sentence had been reworded, so it
-was dropped. That 1.000 is a construction check, not a result.
+**Not a finding.** Book chunks contain 100% of the gold evidence because each question keeps
+only the gold sentences found in the extracted PDF text (sources and PDFs are different
+revisions). That 1.000 is a construction check, not a result.
 
-### The question set
+### The question sets
 
-No existing QA set covers these books, so it is built from the author's own markup, never
-from this pipeline's output:
+**Index set (primary).** The authors placed an index anchor wherever a concept is discussed:
+`\index{term}` in the Think books' LaTeX, `(((term)))` in Pro Git's Asciidoc (release
+2.1.450). Each distinct term is a question, *"Where does the book explain X?"*; its gold
+evidence is every sentence (5+ words) of the paragraph(s) its anchors sit in, within the
+chapter of its first anchor. An anchor belongs to its own paragraph, or, if it sits in a block
+with no prose (right after a heading), to the next paragraph. `a!b` subentries read as
+"b a"; `git commands, add` reads as "git add". Anchors inside held-out glossaries and code
+listings are ignored. Result: 1,348 terms (Think Python 722, Think Stats 417, Pro Git 209);
+257 are also glossary terms and are flagged, and every result is also reported without them.
+Terms were split into dev (80%) and test (20%) by a hash of book and term, committed before
+any result was computed; nothing was tuned afterwards. Listed in
+[`results/questions_index.jsonl`](results/questions_index.jsonl).
 
-1. Every end-of-chapter **Glossary** entry in the LaTeX source (`\item[term:] definition`) is
-   a question: *"In the book, what is meant by 'term'?"*, with the glossary definition as the
-   reference answer (356 entries).
-2. Its **gold passage** is the body paragraph where the author set that term in bold
-   (`{\bf term}`, plural allowed) when introducing it; the gold sentence is the sentence
-   holding the bold term. 66 terms are bold only in the glossary and are dropped.
-3. **Glossary sections are held out** of every corpus and of skill generation, so no arm
-   can answer by finding the glossary entry. The skill writer does not use bold type.
+**Glossary set (secondary).** Every end-of-chapter glossary entry in the Think books' LaTeX is
+a question with its definition as the reference answer; the gold sentence is where the author
+set that term in bold. 289 questions after dropping 66 terms bold only in the glossary and one
+reworded between LaTeX and PDF ([`results/questions_glossary.jsonl`](results/questions_glossary.jsonl)).
+It is kept because it has reference answers for the model arm, and because it shows how a
+question set that shares a proxy with the system under test inflates the result.
 
-That makes the set independent of the pipeline, but not of the skill writer's heuristics:
-a bolded term marks a definition, and the writer's definitions regex looks for definitions,
-so the two overlap by construction (8x enrichment, above). The regex-matched / unmatched
-split is reported for every result that depends on it (`definition_rule` in
-`retrieval_pooled.json` and `books.json`). A question set built from something other than
-glossaries (exercise answers, for instance) is the obvious next step and is not done.
-
-Result: 290 questions, 289 after the revision filter (Think Python 184, Think Stats 105),
-listed with their gold sentences in [`results/questions.jsonl`](results/questions.jsonl)
-(CC BY-NC 3.0 extracts; see `results/NOTICE`). Two query forms are scored: the term
-question, and the glossary definition as the query.
+Glossary sections are held out of every corpus and of skill generation in both sets. The
+skill writer never looks at bold type.
 
 ### The model arm (built and tested, queued, not run)
 
 `book-to-skill model-arm` has a local model (`qwen2.5:14b-instruct` through Ollama) write
-every chapter's reference file at the same word budget as the extractive file, then answers
-all 289 questions four ways: **closed book**, **RAG** (top-5 BM25 book chunks), **skill** (the
-model reads SKILL.md, names a reference file, answers from it: two calls, as an agent would)
-and **both**, each with the extractive and the model-written skill. Answers are graded by
-token F1 against the glossary definition and by the same model as a judge. Every generation
-is cached on disk by (model, prompt, options), so a stopped run resumes.
-`tests/test_model_arm_run.py` runs `model_arm.run()`, `plan()` and the `model-arm` command
-end to end on a two-chapter PDF with a fake transport: every planned request is either a
-real call or a cache hit, and a second run makes no calls. It has not been run on a model:
-`scripts/run_models.sh --dry-run` plans **4,081 requests** (35 generation, 4,046
-answer/route/judge), an upper bound, since identical prompts are generated once.
+every chapter's reference file at the same word budget as the extractive file, measures that
+skill's evidence retention and retrieval on **both** question sets (no model calls needed),
+then answers the 289 glossary questions four ways: **closed book**, **RAG** (top-5 BM25 book
+chunks), **skill** (the model reads SKILL.md, names a reference file, answers from it) and
+**both**, each with the extractive and the model-written skill. Index questions have no
+reference answer, so they are not used for answering. Answers are graded by token F1 against
+the glossary definition and by the same model as a judge. Every generation is cached on disk
+by (model, prompt, options), so a stopped run resumes. `tests/test_model_arm_run.py` runs
+`model_arm.run()`, `plan()` and the `model-arm` command end to end on a two-chapter PDF with
+a fake transport. It has not been run on a model: `scripts/run_models.sh --dry-run` plans
+**4,081 requests** (35 generation, 4,046 answer/route/judge), an upper bound, since identical
+prompts are generated once.
 
 ## Input / Output
 
@@ -360,7 +365,7 @@ bullets are not definitions.
 git clone https://github.com/hammasbuilds/book-to-skill
 cd book-to-skill
 uv sync
-uv run pytest -q                 # 122 tests, no data, no network, no model
+uv run pytest -q                 # 139 tests, no data, no network, no model
 uv run python demo.py            # the known-answer PDF above
 
 # your own book
@@ -370,7 +375,7 @@ uv run book-to-skill search mybook.pdf "what is a closure"
 
 # reproduce every number in this README
 bash scripts/fetch_data.sh       # three books + references, checked against data/MANIFEST.sha256
-uv run book-to-skill experiments # about 14 minutes, writes results/*.json
+uv run book-to-skill experiments # about 31 minutes, writes results/
 
 # the model arm (needs Ollama with qwen2.5:14b-instruct and a free GPU)
 bash scripts/run_models.sh --dry-run
@@ -384,12 +389,14 @@ src/booktoskill/
   pdftext.py       pypdf visitor -> positioned runs; width tables via ToUnicode; figure (XObject) flag
   layout.py        the repairs: figures, headers/page numbers, spacing, code, reflow, hyphens, ligatures
   structure.py     chapters and sections from font sizes; numbering for books that print none
-  chunking.py      section-bounded ~200-word chunks for the book and for skill files
+  chunking.py      ~200-word chunks, packed the same way for the book and for skill files
   bm25.py          Okapi BM25 and a light stemmer, from scratch
   skill.py         the extractive skill writer: SKILL.md index + per-chapter reference files
-  references.py    HTML editions (hevea, Asciidoctor) and the LaTeX glossary question set
-  metrics.py       token F1 vs a reference, code-listing recovery, evidence coverage, bootstrap
-  experiments.py   every no-model result, with its controls and ablations
+  references.py    HTML editions (hevea, Asciidoctor) and the glossary question set (secondary)
+  index_questions.py  the index question set (primary): LaTeX \index and Asciidoc (((term)))
+  metrics.py       token F1, code-listing recovery, evidence trigrams, term and chapter bootstraps
+  evaluation.py    per-question records: retention, controls, regex split, retrieval by words read
+  experiments.py   extraction and structure experiments, and run_all writing results/
   llm.py           Ollama client, disk cache keyed by (model, prompt, options), fake client
   llm_skill.py     the model writer for reference files, at the extractive file's word budget
   answering.py     closed book / RAG / skill / both, routing, judge, token F1
@@ -412,7 +419,7 @@ content-stream decoding is standard library. The model arm additionally needs Ol
 ## Tests
 
 ```bash
-uv run pytest -q     # 122 tests, about 15 seconds
+uv run pytest -q     # 139 tests, about 15 seconds
 ```
 
 Every test builds its own input. The PDF tests write small PDFs with exact geometry (fonts
@@ -435,11 +442,12 @@ model; `experiments` refuses to run and says why when the data is missing.
 - **Only born-digital books from two toolchains were measured**: pdflatex (two books by one
   author with one template) and Asciidoctor PDF. A Word, InDesign or Sphinx book may break
   rules tuned here, the 0.06 em word-space threshold in particular.
-- **The question set is definitions only, and shares a proxy with the skill writer.**
-  Bolded terms (the gold rule) and the definitions regex (the writer's rule) both mark
-  definitions; the split by regex match is reported, and outside it the skill is at chance.
-  No question set independent of glossaries was built.
-- **The model arm has not been run**, so there is no answer-accuracy result yet.
+- **The index set measures where a concept is discussed, not whether a question can be
+  answered.** An index anchor marks a paragraph, and "the skill still contains a sentence of
+  that paragraph" is a proxy for "the skill can help with that term". Index anchors are also
+  uneven: many Think Python entries are Python keywords and names of example programs.
+- **No answer accuracy.** The model arm that measures it has not been run, and it can only
+  use the glossary set, the one with reference answers.
 
 ## Problems hit while building this
 
@@ -475,6 +483,11 @@ model; `experiments` refuses to run and says why when the data is missing.
 - **Sections are not the most common heading.** "The most frequent size below chapter
   level" picked Pro Git's subsections (13 pt, more numerous than its 18 pt sections); it is
   now the largest size below chapter level that recurs, with "Chapter N" labels excluded.
+- **The first question set was partly circular, and the first headline with it.** Gold
+  sentences were where the author bolded a term; the skill's definitions regex looks for
+  exactly those sentences (8x enrichment), which produced "52% vs 27% random". Rebuilding the
+  evaluation on the authors' index anchors, with a held-out test split, turned the headline
+  into its opposite for everything outside definitions.
 - **Found by an independent review, and fixed.** (1) The ablated skill was compared with a
   random control at the *full* skill's budget and one seed, which made it look worse than
   chance; controls are now budget-matched per variant over 20 seeds. (2) "200-word" skill
@@ -496,7 +509,7 @@ PDF text extraction &middot; layout analysis &middot; document structure &middot
 
 Code: MIT. The books are not in this repository and keep their own licences: *Think Python
 2e* and *Think Stats 2e* by Allen B. Downey (Green Tea Press, CC BY-NC 3.0) and *Pro Git*
-by Scott Chacon and Ben Straub (CC BY-NC-SA 3.0). `examples/` and `results/questions.jsonl`
-contain extracts of the two Think books and are shared under CC BY-NC 3.0 with that
-attribution ([`examples/NOTICE`](examples/NOTICE), [`results/NOTICE`](results/NOTICE); each
+by Scott Chacon and Ben Straub (CC BY-NC-SA 3.0); `data/raw/` is gitignored. `examples/`
+contains extracts of the two Think books, shared under CC BY-NC 3.0 with that attribution;
+`results/questions_*.jsonl` quote all three books under their licences ([`examples/NOTICE`](examples/NOTICE), [`results/NOTICE`](results/NOTICE); each
 example `SKILL.md` carries it in its `license` field).

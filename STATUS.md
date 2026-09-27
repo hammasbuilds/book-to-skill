@@ -20,19 +20,37 @@ transport, and queued.
 | 10 | Licence of CC BY-NC extracts | `examples/NOTICE`, `results/NOTICE`; `convert --license` writes a `license:` frontmatter field and an attribution line in SKILL.md | `test_convert_reports_ratio_and_writes_licence` |
 | — | `build_blocks` 119 lines; unused `stat` param | Split into `_leading`, `_Assembler` (classify / new-block / inline-code / flush) and `_text_repairs`; `build_blocks` is 14 lines. `stat` removed | existing layout tests |
 
-## Self-score (after round 1)
+## Review round 2 (coordinator): an independent question set
+
+The only question set was glossary/bold-derived and partly circular with the definitions
+regex. Built and made primary: the authors' **back-of-book index** (`index_questions.py`):
+LaTeX `\index{...}` for the two Think books and Asciidoc `(((...)))` for Pro Git (its source
+fetched at the release commit), 1,348 terms, gold = sentences of the paragraph(s) holding
+each term's anchors. 257 terms that are also glossary terms are flagged and every result is
+also reported without them. A 20% test split (261 terms) was fixed by hash and committed
+(`b8d4767`) before any result was computed; no parameter was changed afterwards. The glossary
+set is kept as secondary and its numbers reproduced exactly under the new code.
+
+Result (test split): skill 39.5% vs random 44.3% at the same budget (sd 2.5, 20 seeds),
+−4.9 points [−11.0, +1.0] by chapter; without glossary terms −8.2 [−15.4, −1.3]; on
+regex-unmatched terms 28.8% vs 41.7%, −12.9 [−20.0, −6.2]; recall@1,000 words 67.1% (book)
+vs 29.9% (skill chunks). The README headline is rewritten to this: outside definitions the
+skill keeps no more than random sentences. Tests: `tests/test_index_questions.py` (16),
+`tests/test_evaluation.py` (11).
+
+## Self-score (after round 2)
 
 | Points | Criterion | Score | Reason |
 |---:|---|---:|---|
-| 15 | Works from a clean clone | 15 | Fresh clone: `uv sync`, `uv run pytest -q` (122 passed), `uv run python demo.py` (10/10), `ruff check` and `ruff format --check` pass. Tests build their own PDFs and LaTeX; nothing reads `data/`, the network or a model. `experiments` reran on the final code in 13.5 minutes. |
-| 20 | Real data, real result | 15 | Three real books, 289 questions, every README number in `results/`. Capped: the answer-accuracy headline needs the model arm; and the retention headline, once split by the regex, says the skill is at chance outside definition-shaped questions. |
-| 15 | Finding quality | 11 | Budget-matched controls over 20 seeds with spread, ablations, equal-words retrieval, per-repair ablations, paired bootstrap CIs, threshold sensitivity, a third toolchain. Held back: the question set and the skill writer share a proxy (8x enrichment) and no independent question set exists; the model arm is unrun. |
-| 15 | Correctness | 13 | 122 tests including regressions for every reviewer finding. The review found real bugs (stray-number structure failure, Unicode crash, budget-mismatched control, misleading chunk sizes), so structure detection on unseen toolchains should be assumed fragile; the coverage guard makes that failure loud instead of silent. |
-| 10 | Usability | 9 | Five subcommands with help on every option, input validation, one-line errors, exit 3 on low coverage, progress lines. `experiments` takes ~14 minutes. |
-| 10 | README | 9 | House skeleton, six verbatim samples with marked cuts, NOT-do, problems hit including the review's findings, correction note on the retracted claim. |
-| 10 | Code quality | 9 | ruff clean, typed, `build_blocks` split, no unused parameters found. `experiments.py` is the largest module (~700 lines) and mixes experiments with result writing. |
-| 5 | Honesty | 5 | Every README number re-checked against `results/` after the rerun; the earlier wrong claims are corrected in place and named as corrections. |
-| **100** | | **86** | Capped by the unrun model arm and by the proxy overlap in the question set. |
+| 15 | Works from a clean clone | 15 | Fresh clone: `uv sync`, `uv run pytest -q` (139 passed), `uv run python demo.py` (10/10), `ruff check` and `ruff format --check` pass. Tests build their own PDFs, LaTeX and Asciidoc; nothing reads `data/`, the network or a model. `experiments` ran on the final code in 31 minutes. |
+| 20 | Real data, real result | 17 | Three real books, two toolchains, 1,348 independent index questions with a held-out test split plus 289 glossary questions, every README number in `results/`. Capped: answer accuracy needs the unrun model arm. |
+| 15 | Finding quality | 13 | Independent, author-placed gold; test split fixed before results; budget-matched random controls over 20 seeds; ablation; regex split; with/without glossary overlap; per book; term and chapter-clustered bootstraps; equal-words retrieval; threshold sensitivity. The negative headline is stated as such. Held back: an index anchor marks where a concept is discussed, which is a proxy for usefulness; per-book test splits are small (41 terms for Pro Git) and Pro Git's dev and test disagree in sign. |
+| 15 | Correctness | 13 | 139 tests including regressions for every reviewer finding and for the new question builders (anchor placement, subentries, includes, listings, split stability). Structure detection on unseen toolchains should still be assumed fragile; the coverage guard makes failure loud. |
+| 10 | Usability | 9 | Five subcommands with help on every option, input validation, one-line errors, exit 3 on low coverage, progress lines. `experiments` now takes ~31 minutes. |
+| 10 | README | 9 | House skeleton, six verbatim samples with marked cuts, NOT-do, problems hit including both reviews, correction notes on retracted claims. |
+| 10 | Code quality | 9 | ruff clean, typed; the evaluation split out of `experiments.py` (now 425 lines) into `evaluation.py` and `index_questions.py`. `layout.py` (512 lines) is the largest module. |
+| 5 | Honesty | 5 | Every README number re-checked against `results/` after the rerun; the earlier positive headline is replaced by the negative one the independent set shows. |
+| **100** | | **90** | Capped by the unrun model arm and by the index-anchor proxy. |
 
 ## Done
 
@@ -46,11 +64,13 @@ transport, and queued.
   for books where stray numbers would mislead; coverage guard in `convert`.
 - Chunking (book and skill packed the same way), BM25 from scratch, the extractive skill
   writer with an optional licence/attribution field.
-- References: hevea and Asciidoctor HTML editions; the LaTeX glossary question set.
+- References: hevea and Asciidoctor HTML editions; the index question set (LaTeX and
+  Asciidoc anchors, dev/test split, glossary-overlap flag) and the glossary question set.
 - Experiments: extraction F1 / defects / code recovery (3 books x 10 systems); structure
-  (3 books x 3 methods); evidence retention and recall@{1,3,5,10} and recall@{250,500,1000,2000}
-  words for 6 corpora x 2 query forms; budget-matched random controls (20 seeds) for the skill
-  and its ablation; the definitions-regex overlap and split; threshold sensitivity.
+  (3 books x 3 methods); for each question set and view (all, dev, test, without glossary
+  terms, per book): evidence retention, recall@{1,3,5,10} and recall@{250,500,1000,2000} words
+  for 6 corpora, budget-matched random controls (20 seeds) for the skill and its ablation with
+  term and chapter-clustered CIs, the definitions-regex split, threshold sensitivity.
 - Model arm: Ollama client with atomic disk cache, fake client, model reference writer at
   the extractive word budget, routing, four conditions x two skills, judge, token F1,
   `scripts/run_models.sh` with RAM/VRAM/Ollama checks and `--dry-run`.
@@ -73,9 +93,11 @@ per call; an interrupted run resumes. Writes `results/model_arm.json`,
 ## Known weaknesses remaining
 
 - **The model arm has not run**: no answer-accuracy number, no model-written-skill retention.
-- **The question set shares a proxy with the skill writer** (bold terms vs a defining-phrase
-  regex, 8x enrichment). The split is reported; a question set not derived from glossaries
-  (e.g. exercises with published solutions) is not built.
+- **The index set is a location proxy.** It asks whether the skill still holds a sentence of
+  the paragraph the author indexed, not whether an agent could answer from it. Only the
+  (unrun) model arm measures answering, and only on the glossary set.
+- **Small per-book test splits.** Pro Git's test split is 41 terms; its dev (+5.2) and test
+  (−4.8) differences disagree in sign, both with intervals spanning zero.
 - **The judge is the answering model** by default. Token F1 is reported alongside;
   `--judge-model` can point elsewhere.
 - **Two of the three books share an author, template and pdflatex**; the structure fallback
@@ -90,7 +112,7 @@ per call; an interrupted run resumes. Writes `results/model_arm.json`,
 unset VIRTUAL_ENV
 uv sync
 bash scripts/fetch_data.sh             # data/raw/, verified against data/MANIFEST.sha256
-uv run book-to-skill experiments       # results/*.json, results/questions.jsonl, results/NOTICE (~14 min)
+uv run book-to-skill experiments       # results/*.json, results/questions_*.jsonl, results/NOTICE (~31 min)
 uv run pytest -q
 uv run python demo.py
 
