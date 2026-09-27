@@ -132,14 +132,18 @@ def cmd_experiments(args: argparse.Namespace) -> int:
     from booktoskill.experiments import run_all
 
     summary = run_all(args.data, args.results)
-    pooled = summary["pooled_retrieval"]["corpora"]
     print(f"wrote results to {args.results}")
-    for name, entry in pooled.items():
+    for name, pooled in summary["pooled"].items():
+        control = pooled["controls"]["variants"]["skill"]
         print(
-            f"  {name:34s} recall@1000w (term) "
-            f"{entry['term']['recall@1000w']['value']:.3f}  "
-            f"evidence kept {entry['evidence_retained']['value']:.3f}"
+            f"  {name} questions: {pooled['n']}; skill keeps {control['kept']['value']:.3f} "
+            f"vs random {control['random_same_budget_mean']:.3f} at the same budget"
         )
+        for corpus in ("book_chunks", "skill_chunks", "skill_files"):
+            entry = pooled["corpora"][corpus]
+            print(
+                f"    {corpus:14s} recall@1000w (term) {entry['term']['recall@1000w']['value']:.3f}"
+            )
     return 0
 
 

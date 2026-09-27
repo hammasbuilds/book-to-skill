@@ -14,16 +14,15 @@ from pathlib import Path
 from booktoskill.answering import CONDITIONS, Outcome, calls_per_item, run_item
 from booktoskill.bm25 import BM25
 from booktoskill.chunking import chunk_book, chunk_markdown, whole_files
-from booktoskill.experiments import (
+from booktoskill.evaluation import (
     CHUNK_WORDS,
     HOLDOUT,
-    BookSpec,
     Corpus,
+    evaluate,
     filter_to_pdf,
-    load_gold,
-    run_retrieval,
-    summarise_retrieval,
 )
+from booktoskill.evaluation import summarise as summarise_set
+from booktoskill.experiments import BookSpec, load_gold, load_index
 from booktoskill.llm import Client
 from booktoskill.llm_skill import build_llm_skill
 from booktoskill.metrics import bootstrap_ci
@@ -37,7 +36,8 @@ from booktoskill.structure import is_content_chapter
 class BookJob:
     spec: BookSpec
     conv: Conversion
-    items: list[GoldItem]
+    items: list[GoldItem]  # glossary questions: they have reference answers
+    index_items: list[GoldItem]  # index questions: retention and retrieval only
     extractive: SkillPackage
 
 
@@ -45,7 +45,9 @@ def prepare(spec: BookSpec) -> BookJob:
     conv = convert(spec.pdf, title=spec.title)
     items, _ = load_gold(spec)
     items, _ = filter_to_pdf(items, conv)
-    return BookJob(spec, conv, items, build_extractive_skill(conv.book, exclude=HOLDOUT))
+    index_items, _ = filter_to_pdf(load_index(spec, {it.term.lower() for it in items}), conv)
+    extractive = build_extractive_skill(conv.book, exclude=HOLDOUT)
+    return BookJob(spec, conv, items, index_items, extractive)
 
 
 def term_mentioned(items: list[GoldItem], refs: dict[str, str]) -> float:
@@ -152,17 +154,17 @@ def run(
         refs = llm_pkg.reference_by_chapter()
         chunks = chunk_book(job.conv.book, CHUNK_WORDS, HOLDOUT)
         extractive_refs = job.extractive.reference_by_chapter()
-        retrieval = summarise_retrieval(
-            run_retrieval(
-                job.items,
-                [
-                    Corpus("book_chunks", chunks),
-                    Corpus("skill_chunks", chunk_markdown(extractive_refs, CHUNK_WORDS)),
-                    Corpus("llm_skill_chunks", chunk_markdown(refs, CHUNK_WORDS)),
-                    Corpus("llm_skill_files", whole_files(refs)),
-                ],
-            )
-        )
+        corpora = [
+            Corpus("book_chunks", chunks),
+            Corpus("skill_chunks", chunk_markdown(extractive_refs, CHUNK_WORDS)),
+            Corpus("llm_skill_chunks", chunk_markdown(refs, CHUNK_WORDS)),
+            Corpus("llm_skill_files", whole_files(refs)),
+        ]
+        variants = {"skill": job.extractive, "llm_skill": llm_pkg}
+        retrieval = {
+            "index": summarise_set(evaluate(job.index_items, job.conv.book, corpora, variants)),
+            "glossary": summarise_set(evaluate(job.items, job.conv.book, corpora, variants)),
+        }
         index = BM25([c.text for c in chunks])
         skills = {"extractive": job.extractive, "llm": llm_pkg}
         book_outcomes: list[Outcome] = []

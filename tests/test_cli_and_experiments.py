@@ -6,15 +6,9 @@ import pytest
 
 from booktoskill.cli import main
 from booktoskill.experiments import book_specs as specs
-from booktoskill.experiments import (
-    chapter_page_ranges,
-    check_inputs,
-    filter_to_pdf,
-    find_index_page,
-    random_budget_references,
-)
+from booktoskill.experiments import chapter_page_ranges, check_inputs, find_index_page
 from booktoskill.pipeline import Conversion
-from booktoskill.references import GoldItem, RefChapter
+from booktoskill.references import RefChapter
 from booktoskill.skill import build_extractive_skill
 
 
@@ -88,43 +82,6 @@ def test_find_index_page() -> None:
     pages = ["Chapter", "text", "Index\nabstraction, 70", "Index 2"]
     assert find_index_page(pages, after=0) == 2
     assert find_index_page(pages, after=3) is None
-
-
-def test_random_control_respects_the_budget(tiny: Conversion) -> None:
-    pkg = build_extractive_skill(tiny.book)
-    refs = random_budget_references(tiny.book, pkg, seed=0)
-    for ch, text in refs.items():
-        budget = len(pkg.reference_by_chapter()[ch].split())
-        # stops at the first sentence that reaches the budget
-        assert len(text.split()) <= budget + 40
-    assert refs == random_budget_references(tiny.book, pkg, seed=0)
-
-
-def test_filter_to_pdf_drops_reworded_items(tiny: Conversion) -> None:
-    def item(sentence: str) -> GoldItem:
-        return GoldItem("q", "b", 1, "t", "variable", "d", sentence, sentence)
-
-    kept, dropped = filter_to_pdf(
-        [
-            item("A variable is a name that refers to a value."),
-            item("Completely different wording that the book never printed."),
-        ],
-        tiny,
-    )
-    assert len(kept) == 1 and dropped == 1
-
-
-def test_retention_by_threshold_counts_per_corpus() -> None:
-    from booktoskill.chunking import Chunk
-    from booktoskill.experiments import Corpus, retention_by_threshold
-
-    sentence = "A variable is a name that refers to a value."
-    item = GoldItem("q", "b", 1, "t", "variable", "d", sentence, sentence)
-    full = Corpus("full", [Chunk("1", "1", "", "Intro. " + sentence)])
-    half = Corpus("half", [Chunk("1", "1", "", "A variable is a name that")])
-    out = retention_by_threshold([item], [full, half], thresholds=(0.4, 0.8))
-    assert out["full"] == {">=0.4": 1, ">=0.8": 1, "n": 1}
-    assert out["half"] == {">=0.4": 1, ">=0.8": 0, "n": 1}
 
 
 def test_code_retention_counts_verbatim_blocks(tiny: Conversion) -> None:
@@ -217,66 +174,3 @@ def test_junk_metadata_falls_back_to_title_page(tmp_path: Path) -> None:
 
     pdf = write_pdf(tmp_path / "t.pdf", tiny_book(), title="thesis.dvi")
     assert convert(pdf).book.title == "A Tiny Book"
-
-
-def test_budget_hits_truncates_the_crossing_unit() -> None:
-    from booktoskill.experiments import budget_hits
-
-    gold = "A variable is a name that refers to a value."
-    filler = "lorem " * 100
-    texts = [filler, "Intro words here. " + gold]
-    flags = [False, True]
-    assert not budget_hits(texts, flags, gold, 100)  # budget spent on the first unit
-    assert not budget_hits(texts, flags, gold, 103)  # gold cut off mid-sentence
-    assert budget_hits(texts, flags, gold, 115)  # gold fits in the truncated unit
-    assert budget_hits([gold], [True], gold, 1000)
-
-
-def test_random_control_uses_each_variants_own_budget() -> None:
-    from booktoskill.experiments import skill_variants
-    from booktoskill.layout import Block
-    from booktoskill.structure import Book, Chapter, Section
-
-    prose = " ".join(f"Sentence {i} talks about loops and lists at length." for i in range(80))
-    defs = " ".join(f"A thing{i} is called a widget{i} in this book." for i in range(12))
-    ch = Chapter("1", "C", 0)
-    ch.sections = [Section("1.1", "S", 0, [Block("paragraph", defs + " " + prose, 0)])]
-    book = Book("B", [ch], {})
-    variants = skill_variants(book)
-    budget = {n: len(p.reference_by_chapter()["1"].split()) for n, p in variants.items()}
-    got = {n: len(random_budget_references(book, p, 0)["1"].split()) for n, p in variants.items()}
-    # Regression: the no-definitions skill was compared with random text at the
-    # full skill's (larger) budget.
-    assert budget["skill_without_definitions"] < budget["skill"]
-    for name in variants:
-        assert budget[name] <= got[name] < budget[name] + 15
-
-
-def test_controls_and_counts_are_summarised_over_seeds() -> None:
-    from booktoskill.experiments import _add_counts, describe_controls
-
-    total: dict = {}
-    _add_counts(
-        total, {"skill": {"kept": 3, "words": 10, "random_same_budget_kept_by_seed": [1, 2]}}
-    )
-    _add_counts(
-        total, {"skill": {"kept": 1, "words": 5, "random_same_budget_kept_by_seed": [1, 0]}}
-    )
-    assert total == {"skill": {"kept": 4, "words": 15, "random_same_budget_kept_by_seed": [2, 2]}}
-    d = describe_controls(total, n=8)["skill"]
-    assert d["kept"] == 0.5 and d["random_same_budget_mean"] == 0.25 and d["seeds"] == 2
-
-
-def test_definition_rule_overlap_counts_regex_matches(tiny: Conversion) -> None:
-    from booktoskill.experiments import definition_rule_overlap, skill_variants
-
-    s1 = "A variable is a name that refers to a value."
-    s2 = "Loops can also be nested inside each other, which is common when processing tables."
-    items = [
-        GoldItem("a", "b", 1, "t", "variable", "d", s1, s1),
-        GoldItem("b", "b", 2, "t", "nested", "d", s2, s2),
-    ]
-    d = definition_rule_overlap(items, tiny.book, skill_variants(tiny.book))
-    assert d["gold"] == 2 and d["gold_matching"] == 1
-    assert d["kept_by_skill_matching"] == 1 and d["kept_by_definitions_section"] == 1
-    assert 0 < d["book_sentences_matching"] < d["book_sentences"]

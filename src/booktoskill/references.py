@@ -186,14 +186,30 @@ def parse_html_edition(path: str | Path, style: EditionStyle = HEVEA) -> list[Re
 
 @dataclass(frozen=True)
 class GoldItem:
+    """One question with its gold evidence.
+
+    Glossary questions (``kind="glossary"``) have one gold sentence: the one
+    holding the author's bold term. Index questions (``kind="index"``, see
+    ``index_questions.py``) have every sentence of the paragraphs the
+    author's index anchors point at; any of them counts as the evidence.
+    """
+
     qid: str
     book: str
-    chapter: int
+    chapter: int | str
     chapter_title: str
     term: str
-    definition: str  # the glossary entry: the reference answer
-    gold_passage: str  # the body paragraph that introduces the term in bold
-    gold_sentence: str  # the sentence of that paragraph containing the bold term
+    definition: str  # the glossary entry: the reference answer ("" for index items)
+    gold_passage: str  # the gold paragraph(s)
+    gold_sentence: str  # the first gold sentence
+    evidence: tuple[str, ...] = ()  # every acceptable gold sentence; () = (gold_sentence,)
+    kind: str = "glossary"
+    split: str = ""  # "dev" or "test" for index items
+    in_glossary: bool = False  # index term that is also a glossary term
+
+    @property
+    def evidence_sentences(self) -> tuple[str, ...]:
+        return self.evidence or (self.gold_sentence,)
 
 
 _TEX_SIMPLE = [

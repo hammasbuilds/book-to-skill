@@ -56,6 +56,36 @@ fetch "$PG/progit.pdf" "$RAW/progit.pdf" \
 fetch "$PG/progit.html" "$RAW/progit.html" \
   2d9ec2e82aca6d28be4415226b6e118bcc15faa61b76524537779866cadfeb5a
 
+# Pro Git's Asciidoc source at the same release (commit of tag 2.1.450), for its
+# index terms: progit.asc and every file it includes, recursively.
+PG_SRC=https://raw.githubusercontent.com/progit/progit2/a013e3230a1207cfa5ae94d28ba7d2021063c337
+mkdir -p "$RAW/progit-src"
+queue="progit.asc"
+seen=" "
+while [[ -n $queue ]]; do
+  f=${queue%% *}
+  [[ $queue == *" "* ]] && queue=${queue#* } || queue=""
+  [[ $seen == *" $f "* ]] && continue
+  seen="$seen$f "
+  dest="$RAW/progit-src/$f"
+  mkdir -p "$(dirname "$dest")"
+  if [[ ! -s $dest ]]; then
+    for attempt in 1 2 3 4 5; do
+      curl -sSL --fail -m 60 -o "$dest" "$PG_SRC/$f" && break
+      rm -f "$dest"
+      sleep 2
+    done
+  fi
+  [[ -s $dest ]] || continue  # an include that does not exist upstream
+  dir=$(dirname "$f")
+  for inc in $(grep -o '^include::[^[]*' "$dest" | sed 's/^include:://'); do
+    p="$dir/$inc"
+    queue="$queue ${p#./}"
+  done
+  queue=${queue# }
+done
+echo "Pro Git source: $(find "$RAW/progit-src" -name '*.asc' | wc -l) .asc files"
+
 # HTML editions: one page per chapter. Pages past the last chapter return 404.
 for book in thinkpython2 thinkstats2; do
   for n in $(seq -w 1 30); do

@@ -190,3 +190,68 @@ def bootstrap_ci(
     lo = samples[int(alpha / 2 * n_boot)]
     hi = samples[min(n_boot - 1, int((1 - alpha / 2) * n_boot))]
     return (lo, hi)
+
+
+EVIDENCE_THRESHOLD = 0.6
+
+
+def gram_set(text: str, n: int = 3) -> frozenset[tuple[str, ...]]:
+    """The word n-grams of ``text`` after evidence normalisation."""
+    return frozenset(_ngrams(evidence_words(text), n))
+
+
+@dataclass(frozen=True)
+class Evidence:
+    """Gold evidence as precomputed trigram sets, one per acceptable sentence.
+
+    A unit holds the evidence when it contains at least ``EVIDENCE_THRESHOLD``
+    of the trigrams of any one gold sentence: the same rule as
+    :func:`contains_evidence`, computed once per sentence instead of per call.
+    Sentences shorter than three words have no trigrams and are ignored.
+    """
+
+    grams: tuple[frozenset[tuple[str, ...]], ...]
+
+    @classmethod
+    def of(cls, sentences: Sequence[str]) -> Evidence:
+        return cls(tuple(g for s in sentences if (g := gram_set(s))))
+
+    def coverage(self, unit: frozenset[tuple[str, ...]]) -> float:
+        return max((len(g & unit) / len(g) for g in self.grams), default=0.0)
+
+    def found(
+        self, unit: frozenset[tuple[str, ...]], threshold: float = EVIDENCE_THRESHOLD
+    ) -> bool:
+        return any(len(g & unit) >= threshold * len(g) for g in self.grams)
+
+    def found_in(self, text: str) -> bool:
+        return self.found(gram_set(text))
+
+
+def cluster_bootstrap_ci(
+    values: Sequence[float],
+    clusters: Sequence[str],
+    n_boot: int = 2000,
+    seed: int = 0,
+    alpha: float = 0.05,
+) -> tuple[float, float]:
+    """Bootstrap interval for the mean, resampling whole clusters (e.g. chapters).
+
+    Questions from one chapter share its skill file, so they are not
+    independent; resampling chapters gives the honest, wider interval.
+    """
+    groups: dict[str, list[float]] = {}
+    for v, c in zip(values, clusters, strict=True):
+        groups.setdefault(c, []).append(v)
+    if not groups:
+        return (0.0, 0.0)
+    keys = sorted(groups)
+    rng = random.Random(seed)
+    samples = []
+    for _ in range(n_boot):
+        picked = [groups[keys[rng.randrange(len(keys))]] for _ in keys]
+        total = sum(sum(g) for g in picked)
+        count = sum(len(g) for g in picked)
+        samples.append(total / count)
+    samples.sort()
+    return samples[int(alpha / 2 * n_boot)], samples[min(n_boot - 1, int((1 - alpha / 2) * n_boot))]
