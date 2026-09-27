@@ -132,3 +132,16 @@ def test_code_retention_counts_verbatim_blocks(tiny: Conversion) -> None:
 
     pkg = build_extractive_skill(tiny.book)
     assert code_retention(tiny.book, pkg) == {"book_code_blocks": 1, "in_skill": 1}
+
+
+def test_convert_without_chapters_explains(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from booktoskill.samplepdf import PageSpec, write_pdf
+
+    spec = PageSpec()
+    for i in range(12):
+        spec.line(700 - 14 * i, [("R", f"Plain prose with no headings at all, line number {i}.")])
+    f = write_pdf(tmp_path / "flat.pdf", [spec])
+    assert main(["convert", str(f), "--out", str(tmp_path)]) == 2
+    assert "no numbered chapters" in capsys.readouterr().err

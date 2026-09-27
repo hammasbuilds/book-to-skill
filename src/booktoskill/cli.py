@@ -45,7 +45,10 @@ def cmd_convert(args: argparse.Namespace) -> int:
     conv = _load(args)
     exclude = tuple(args.exclude_section or ())
     name = args.name or skill_name(conv.book.title)
-    pkg = build_extractive_skill(conv.book, name=name, exclude=exclude)
+    try:
+        pkg = build_extractive_skill(conv.book, name=name, exclude=exclude)
+    except ValueError as exc:
+        raise UsageError(f"{exc}; run `book-to-skill inspect` to see what was found") from exc
     root = write_skill(pkg, args.out)
     if args.markdown:
         (root / "book.md").write_text(book_to_markdown(conv.book), encoding="utf-8")

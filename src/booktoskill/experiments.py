@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import random
+import sys
 from dataclasses import asdict, dataclass, fields, replace
 from pathlib import Path
 
@@ -497,6 +498,7 @@ def run_all(data_dir: str | Path, results_dir: str | Path) -> dict:
     all_items: list[GoldItem] = []
     sensitivity: dict[str, dict[str, int]] = {}
     for spec in specs:
+        print(f"[{spec.key}] extraction, structure, retrieval ...", file=sys.stderr, flush=True)
         book, items, run, counts = run_book(spec)
         summary[spec.key] = book
         all_items.extend(items)

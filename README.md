@@ -12,7 +12,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/python-3.11%2B-blue" alt="python">
-  <img src="https://img.shields.io/badge/tests-95%20passing-success" alt="tests">
+  <img src="https://img.shields.io/badge/tests-96%20passing-success" alt="tests">
   <img src="https://img.shields.io/badge/runtime%20deps-pypdf%20only-success" alt="dependencies">
   <img src="https://img.shields.io/badge/model%20arm-queued%2C%20not%20run-orange" alt="model arm">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="license"></a>
@@ -285,7 +285,7 @@ lives, and its misses are visible too (the fourth bullet is not a definition):
 git clone https://github.com/hammasbuilds/book-to-skill
 cd book-to-skill
 uv sync
-uv run pytest -q                 # 95 tests, no data, no network, no model
+uv run pytest -q                 # 96 tests, no data, no network, no model
 uv run python demo.py            # the known-answer PDF above
 
 # your own book
@@ -323,6 +323,7 @@ src/booktoskill/
   cli.py           convert | inspect | search | experiments | model-arm
 scripts/fetch_data.sh   downloads with resume and hashes
 scripts/run_models.sh   the model arm, with RAM/GPU/Ollama checks and --dry-run
+scripts/before_after.py prints Input/Output samples 2 and 3
 results/                every number in this README
 examples/               the extractive skills for both Think books
 ```
@@ -336,7 +337,7 @@ content-stream decoding is standard library. The model arm additionally needs Ol
 ## Tests
 
 ```bash
-uv run pytest -q     # 95 tests, about 10 seconds
+uv run pytest -q     # 96 tests, about 15 seconds
 ```
 
 Every test builds its own input. The PDF tests write small PDFs with exact geometry (fonts
