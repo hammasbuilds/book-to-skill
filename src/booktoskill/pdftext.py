@@ -58,6 +58,7 @@ class Run:
     text: str
     in_figure: bool = False
     lead_space: bool = False  # the decoded text began with a space
+    pad: int = 0  # leading whitespace drawn as glyphs, when it starts with a no-break space
 
     @property
     def x_end(self) -> float:
@@ -98,12 +99,16 @@ class Line:
         out: list[str] = []
         prev: Run | None = None
         for run in self.runs:
-            if prev is not None:
+            if prev is None:
+                # Leading spaces drawn as glyphs (Prawn pads code with no-break
+                # spaces) are indentation the x position does not show.
+                if code and run.font.mono:
+                    out.append(" " * run.pad)
+            else:
                 gap = run.x - prev.x_end
                 if code and run.font.mono:
                     cw = run.font.text_width("m", run.size) or run.size * 0.5
-                    n = max(0, round(gap / cw))
-                    out.append(" " * n)
+                    out.append(" " * max(run.pad, round(gap / cw), 0))
                 elif (
                     (gap > space_gap * run.size or run.lead_space)
                     and not out[-1].endswith((" ", "(", "[", "{"))
@@ -242,7 +247,11 @@ class _Collector:
         # position sits on the space and the geometric gap reads as zero.
         info = _font_info(font, self.cache)
         lead = text[:1] in (" ", chr(0xA0))
-        self.runs.append(Run(x, y, float(size) * scale, info, stripped, self.depth > 0, lead))
+        # pypdf infers plain spaces; a no-break space is a glyph the producer
+        # drew, so the whitespace run it starts is real indentation.
+        pad = len(text) - len(text.lstrip(" " + chr(0xA0))) if text[:1] == chr(0xA0) else 0
+        in_fig = self.depth > 0
+        self.runs.append(Run(x, y, float(size) * scale, info, stripped, in_fig, lead, pad))
 
 
 def read_pdf(path: str | Path, *, line_tolerance: float = 2.5) -> list[Page]:

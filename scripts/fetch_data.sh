@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Download the two books, their HTML editions and their LaTeX sources into data/raw/.
+# Download the three books and their references into data/raw/.
 #
-# Both books are by Allen B. Downey, Green Tea Press, CC BY-NC 3.0:
+# Two books by Allen B. Downey, Green Tea Press, CC BY-NC 3.0, with their HTML
+# editions and LaTeX sources:
 #   Think Python 2e  https://greenteapress.com/wp/think-python-2e/
 #   Think Stats 2e   https://greenteapress.com/wp/think-stats-2e/
 # The LaTeX comes from the author's GitHub repositories, pinned to the commits
@@ -45,6 +46,15 @@ fetch "https://raw.githubusercontent.com/AllenDowney/ThinkPython2/$TP_COMMIT/boo
   "$RAW/thinkpython2.tex" 2a575edefd82d754a1088b5e35cf69435a3b82b27f689e0771d633f2df1a1fc4
 fetch "https://raw.githubusercontent.com/AllenDowney/ThinkStats2/$TS_COMMIT/book/book.tex" \
   "$RAW/thinkstats2.tex" 130799d64be4a303b26b438115411509ee3d00c30a24a14e0b533f65235dbeec
+
+# Pro Git 2e (Scott Chacon, Ben Straub; CC BY-NC-SA 3.0), release 2.1.450: the
+# Asciidoctor PDF and the single-page HTML built from the same source. It is
+# the non-LaTeX control for extraction and structure (it has no glossary).
+PG=https://github.com/progit/progit2/releases/download/2.1.450
+fetch "$PG/progit.pdf" "$RAW/progit.pdf" \
+  403f4051cdca2c585361d85f6e87d5dd87d8c544fc91dced007711babe81e8ef
+fetch "$PG/progit.html" "$RAW/progit.html" \
+  2d9ec2e82aca6d28be4415226b6e118bcc15faa61b76524537779866cadfeb5a
 
 # HTML editions: one page per chapter. Pages past the last chapter return 404.
 for book in thinkpython2 thinkstats2; do

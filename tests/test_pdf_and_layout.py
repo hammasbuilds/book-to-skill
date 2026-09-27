@@ -190,3 +190,18 @@ def test_unattested_breaks_follow_the_books_own_habit(tmp_path: Path) -> None:
     text = blocks_text(blocks)
     assert "well-known workflow" in text and "branch-management" in text
     assert report.hyphens_kept == 2 and report.hyphen_joins == 0
+
+
+def test_indentation_drawn_as_no_break_spaces_is_kept(tmp_path: Path) -> None:
+    # Asciidoctor PDF (Prawn) starts every code line at the same x and draws
+    # the indentation as a no-break space followed by spaces.
+    nbsp = chr(0xA0)
+    spec = PageSpec()
+    spec.line(700, [("R", "Some prose before the listing, long enough to look like a line:")])
+    spec.line(686, [("R", "and a second line of prose that ends the paragraph right here.")])
+    spec.line(662, [("M", "if ready:")])
+    spec.line(648, [("M", nbsp + "   go()")])
+    spec.line(620, [("R", "More prose follows the listing on the next line down the page.")])
+    spec.line(606, [("R", "And one more line of prose to settle the line spacing for good.")])
+    blocks, _ = build_blocks(read_pdf(write_pdf(tmp_path / "p.pdf", [spec])))
+    assert [b.text for b in blocks if b.kind == "code"] == ["if ready:\n    go()"]

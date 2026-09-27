@@ -11,7 +11,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
-FIRST, LAST = 32, 126
+FIRST, LAST = 32, 255  # WinAnsi, so a no-break space (160) can be drawn
 
 
 def prop_width(code: int) -> int:
