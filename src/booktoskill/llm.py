@@ -57,7 +57,7 @@ class DiskCache:
         p = self._path(key)
         p.parent.mkdir(parents=True, exist_ok=True)
         tmp = p.with_suffix(".tmp")
-        tmp.write_text(json.dumps(record, ensure_ascii=False), encoding="utf-8")
+        tmp.write_text(json.dumps(record, ensure_ascii=False), encoding="utf-8", newline="\n")
         tmp.replace(p)  # atomic: a killed run never leaves a half-written entry
 
 

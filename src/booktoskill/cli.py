@@ -51,7 +51,7 @@ def cmd_convert(args: argparse.Namespace) -> int:
         raise UsageError(f"{exc}; run `book-to-skill inspect` to see what was found") from exc
     root = write_skill(pkg, args.out)
     if args.markdown:
-        (root / "book.md").write_text(book_to_markdown(conv.book), encoding="utf-8")
+        (root / "book.md").write_text(book_to_markdown(conv.book), encoding="utf-8", newline="\n")
     chapters = [ch for ch in conv.book.chapters if is_content_chapter(ch)]
     book_words = sum(len(b.text.split()) for ch in chapters for b in ch.blocks(exclude))
     print(f"wrote {root}")

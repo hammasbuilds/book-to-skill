@@ -7,11 +7,11 @@ from a clean clone; the answer-accuracy arm is built, tested with a fake client 
 
 | Points | Criterion | Score | Reason |
 |---:|---|---:|---|
-| 15 | Works from a clean clone | 15 | Fresh `git clone` + `uv sync` + `uv run pytest -q` (96 passed) + `uv run python demo.py` (10/10) + `ruff check` / `ruff format --check` all pass. Tests build their own PDFs; nothing reads `data/`, the network or a model. With `data/raw` copied in and verified against `data/MANIFEST.sha256`, `book-to-skill experiments` in the clone reproduces the committed `results/` byte for byte (see below). |
+| 15 | Works from a clean clone | 15 | Fresh `git clone` + `uv sync` + `uv run pytest -q` (96 passed) + `uv run python demo.py` (10/10) + `ruff check` / `ruff format --check` all pass. Tests build their own PDFs; nothing reads `data/`, the network or a model. With `data/raw` copied in and verified against `data/MANIFEST.sha256`, `book-to-skill experiments` in the clone reproduced all six committed `results/` files with identical content (833 s on this machine). |
 | 20 | Real data, real result | 16 | Three real books (two CC BY-NC LaTeX books with 289 questions, Pro Git as a non-LaTeX control), every README number in `results/`. Capped: the headline the brief asks for last (answer accuracy of skill vs RAG vs both) needs the model arm. |
 | 15 | Finding quality | 12 | Controls and ablations: random sentences at the same word budget (5 seeds), the skill without its definitions section, every repair switched off one at a time, pypdf's own text, the PDF outline for structure, a third book from another toolchain. Paired bootstrap CIs over questions and chapters; threshold sensitivity; the 1.000 retention of book chunks traced to the question filter and labelled a construction check. Capped because the answer-accuracy comparison is not run, and because the question set is definitions only, which favours an extractive skill with a definitions section (stated). |
 | 15 | Correctness | 14 | 96 tests on behaviour, edge cases and failure modes (known-geometry PDFs; CMap parsing; hyphenation prior on a ragged-right book; NBSP indentation; circled digits; corrupt, text-less, non-PDF and chapter-less inputs; the dry-run call estimate equals the calls a fake client receives). Known residual defects are listed below rather than fixed (`2 π`, in-line column alignment). |
-| 10 | Usability | 9 | `convert / inspect / search / experiments / model-arm`, each with `--help`, sensible defaults and one-line errors (missing file, not a PDF, unreadable PDF, scanned PDF, no chapters, missing data, Ollama down or model not pulled). `experiments` takes about 12 minutes with one progress line per book. |
+| 10 | Usability | 9 | `convert / inspect / search / experiments / model-arm`, each with `--help`, sensible defaults and one-line errors (missing file, not a PDF, unreadable PDF, scanned PDF, no chapters, missing data, Ollama down or model not pulled). `experiments` takes about 14 minutes with one progress line per book. |
 | 10 | README | 10 | House skeleton (centred title, thesis, nav, badges, mermaid + blockquote claim, findings table near the top, 6 real Input/Output samples, Quick start, Layout, Requirements, Tests, NOT-do, ten real problems hit, Keywords, License). British spelling. Inspiration credited in one line. |
 | 10 | Code quality | 9 | ruff clean, typed, 15 small modules, one runtime dependency (pypdf), no dead code found on a final pass. `layout.build_blocks` is still the longest function (about 110 lines) even after extracting the paragraph-break rule. |
 | 5 | Honesty | 5 | Every number in the README was checked against the results files after writing; wrong claims found on that pass were corrected (threshold sensitivity, sections lost without repair). Limitations and the untested toolchains are stated. |
@@ -85,7 +85,7 @@ unset VIRTUAL_ENV
 uv sync
 bash scripts/fetch_data.sh             # data/raw/, verified against data/MANIFEST.sha256
 uv run book-to-skill experiments       # results/{extraction,structure,retrieval,retrieval_pooled,books}.json
-                                       # and results/questions.jsonl (about 12 minutes)
+                                       # and results/questions.jsonl (about 14 minutes)
 uv run pytest -q
 uv run python demo.py
 

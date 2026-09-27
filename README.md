@@ -295,7 +295,7 @@ uv run book-to-skill search mybook.pdf "what is a closure"
 
 # reproduce every number in this README
 bash scripts/fetch_data.sh       # three books + references, checked against data/MANIFEST.sha256
-uv run book-to-skill experiments # about 12 minutes, writes results/*.json
+uv run book-to-skill experiments # about 14 minutes, writes results/*.json
 
 # the model arm (needs Ollama with qwen2.5:14b-instruct and a free GPU)
 bash scripts/run_models.sh --dry-run

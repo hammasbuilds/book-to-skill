@@ -510,9 +510,11 @@ def run_all(data_dir: str | Path, results_dir: str | Path) -> dict:
                 mine[key] += value
 
     def write(name: str, payload: object) -> None:
-        (results_dir / name).write_text(json.dumps(payload, indent=2), encoding="utf-8")
+        (results_dir / name).write_text(
+            json.dumps(payload, indent=2), encoding="utf-8", newline="\n"
+        )
 
-    with (results_dir / "questions.jsonl").open("w", encoding="utf-8") as fh:
+    with (results_dir / "questions.jsonl").open("w", encoding="utf-8", newline="\n") as fh:
         for it in all_items:
             fh.write(json.dumps(asdict(it), ensure_ascii=False) + "\n")
     for name in ("extraction", "structure"):

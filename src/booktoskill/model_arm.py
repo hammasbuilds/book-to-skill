@@ -174,8 +174,10 @@ def run(
         }
     report["pooled_qa"] = summarise(outcomes)
     report["conditions"] = list(CONDITIONS)
-    (results_dir / "model_arm.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
-    with (results_dir / "model_outcomes.jsonl").open("w", encoding="utf-8") as fh:
+    (results_dir / "model_arm.json").write_text(
+        json.dumps(report, indent=2), encoding="utf-8", newline="\n"
+    )
+    with (results_dir / "model_outcomes.jsonl").open("w", encoding="utf-8", newline="\n") as fh:
         for o in outcomes:
             fh.write(json.dumps(asdict(o), ensure_ascii=False) + "\n")
     return report

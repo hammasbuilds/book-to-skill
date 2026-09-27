@@ -249,7 +249,7 @@ def reference_file_name(ch: Chapter) -> str:
 def write_skill(pkg: SkillPackage, out_dir: str | Path) -> Path:
     root = Path(out_dir) / pkg.name
     (root / "references").mkdir(parents=True, exist_ok=True)
-    (root / "SKILL.md").write_text(pkg.skill_md, encoding="utf-8")
+    (root / "SKILL.md").write_text(pkg.skill_md, encoding="utf-8", newline="\n")
     for fname, text in pkg.references.items():
-        (root / fname).write_text(text, encoding="utf-8")
+        (root / fname).write_text(text, encoding="utf-8", newline="\n")
     return root
