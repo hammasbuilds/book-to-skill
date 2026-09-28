@@ -14,8 +14,14 @@ from booktoskill.chunking import chunk_book
 from booktoskill.layout import RepairOptions
 from booktoskill.llm import LLMError
 from booktoskill.pipeline import Conversion, convert
-from booktoskill.skill import build_extractive_skill, skill_name, write_skill
-from booktoskill.structure import book_to_markdown, content_coverage, is_content_chapter
+from booktoskill.skill import (
+    MAX_NAME,
+    SKILL_NAME_RE,
+    build_extractive_skill,
+    skill_name,
+    write_skill,
+)
+from booktoskill.structure import Book, book_to_markdown, content_coverage, is_content_chapter
 
 # Below this share of the book's words inside numbered chapters, the structure
 # detector has almost certainly misread the book (a title page taken for the
@@ -55,9 +61,38 @@ def _load(args: argparse.Namespace) -> Conversion:
     return conv
 
 
+def _skill_name(text: str) -> str:
+    """``--name``: the skill's folder name, so it must stay inside ``--out``."""
+    if len(text) > MAX_NAME or not SKILL_NAME_RE.fullmatch(text):
+        raise argparse.ArgumentTypeError(
+            f"{text!r} is not a valid skill name: use 1-64 lowercase letters, digits and "
+            f"hyphens, e.g. {skill_name(text)!r}"
+        )
+    return text
+
+
+def _out_dir(path: Path) -> Path:
+    if path.exists() and not path.is_dir():
+        raise UsageError(f"--out {path} is a file; give a directory to write the skill into")
+    return path
+
+
+def _warn_unmatched_excludes(book: Book, exclude: tuple[str, ...]) -> None:
+    titles = {s.title.lower() for ch in book.chapters for s in ch.sections}
+    for title in exclude:
+        if title.lower() not in titles:
+            print(
+                f"book-to-skill: warning: --exclude-section {title!r} matches no section title; "
+                "nothing was left out for it (see `book-to-skill inspect --sections`)",
+                file=sys.stderr,
+            )
+
+
 def cmd_convert(args: argparse.Namespace) -> int:
+    out = _out_dir(Path(args.out))
     conv = _load(args)
     exclude = tuple(args.exclude_section or ())
+    _warn_unmatched_excludes(conv.book, exclude)
     coverage = content_coverage(conv.book)
     if coverage < MIN_COVERAGE and not args.allow_low_coverage:
         raise LowCoverage(
@@ -71,7 +106,11 @@ def cmd_convert(args: argparse.Namespace) -> int:
         pkg = build_extractive_skill(conv.book, name=name, exclude=exclude, source=args.license)
     except ValueError as exc:
         raise UsageError(f"{exc}; run `book-to-skill inspect` to see what was found") from exc
-    root = write_skill(pkg, args.out)
+    _out_dir(out / pkg.name)  # a file where the skill folder would go
+    try:
+        root = write_skill(pkg, out)
+    except OSError as exc:
+        raise UsageError(f"could not write the skill under {out}: {exc}") from exc
     if args.markdown:
         (root / "book.md").write_text(book_to_markdown(conv.book), encoding="utf-8", newline="\n")
     chapters = [ch for ch in conv.book.chapters if is_content_chapter(ch)]
@@ -153,19 +192,29 @@ def cmd_model_arm(args: argparse.Namespace) -> int:
     from booktoskill.llm import list_models, ollama_client
 
     specs = book_specs(args.data)
+    second = None if args.second_judge.lower() in ("", "none") else args.second_judge
     if args.dry_run:
-        print(json.dumps(model_arm.plan(specs), indent=2))
+        print(json.dumps(model_arm.plan(specs, judges=2 if second else 1), indent=2))
         return 0
     available = list_models(args.url)
-    missing = [m for m in {args.model, args.judge_model} if m not in available]
+    wanted = [args.model, args.judge_model, *([second] if second else [])]
+    missing = sorted({m for m in wanted if m not in available})
     if missing:
         raise UsageError(f"ollama has not pulled {', '.join(missing)}; run `ollama pull` first")
     cache = Path(args.cache)
     client = ollama_client(cache, args.model, args.url)
     judge = ollama_client(cache, args.judge_model, args.url)
-    report = model_arm.run(specs, args.results, args.out, client, judge, k=args.k)
+    clients = [client, judge]
+    second_client = None
+    if second:
+        second_client = ollama_client(cache, second, args.url)
+        clients.append(second_client)
+    report = model_arm.run(
+        specs, args.results, args.out, client, judge, k=args.k, second_judge=second_client
+    )
     print(json.dumps(report["pooled_qa"], indent=2))
-    print(f"model calls: {client.calls + judge.calls} new, {client.hits + judge.hits} cached")
+    calls, hits = sum(c.calls for c in clients), sum(c.hits for c in clients)
+    print(f"model calls: {calls} new, {hits} cached")
     return 0
 
 
@@ -194,7 +243,11 @@ def build_parser() -> argparse.ArgumentParser:
     c = sub.add_parser("convert", help="write a skill package for a PDF")
     pdf_args(c, exclude=True)
     c.add_argument("--out", default="skills", help="output directory (default: skills)")
-    c.add_argument("--name", help="skill name (default: slug of the title)")
+    c.add_argument(
+        "--name",
+        type=_skill_name,
+        help="skill name: 1-64 lowercase letters, digits and hyphens (default: slug of the title)",
+    )
     c.add_argument(
         "--license",
         metavar="TEXT",
@@ -235,7 +288,18 @@ def build_parser() -> argparse.ArgumentParser:
     m.add_argument(
         "--model", default="qwen2.5:14b-instruct", help="answering and skill-writing model"
     )
-    m.add_argument("--judge-model", default="qwen2.5:14b-instruct", help="grading model")
+    m.add_argument(
+        "--judge-model",
+        default="qwen2.5:14b-instruct",
+        help="primary grading model (default: the strongest pulled model, which is also the "
+        "answering model; see --second-judge)",
+    )
+    m.add_argument(
+        "--second-judge",
+        default="llama3.2:3b",
+        help="a model from another family that grades every answer again, for judge "
+        "agreement (default llama3.2:3b; 'none' to skip)",
+    )
     m.add_argument("-k", type=_positive, default=5, help="chunks retrieved for RAG (default 5)")
     m.add_argument("--dry-run", action="store_true", help="print the job list and call count")
     m.set_defaults(func=cmd_model_arm)

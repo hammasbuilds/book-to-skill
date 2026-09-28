@@ -41,6 +41,8 @@ DEFINING_RE = re.compile(
     re.I,
 )
 MAX_DESCRIPTION = 1024
+SKILL_NAME_RE = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*")
+MAX_NAME = 64
 
 
 @dataclass
@@ -52,6 +54,10 @@ class SkillPackage:
 
     def reference_by_chapter(self) -> dict[str, str]:
         return {ch: self.references[f] for ch, f in self.chapter_files.items()}
+
+    def prose_budget_by_chapter(self) -> dict[str, int]:
+        """Per chapter, the words of its reference file that can hold book prose."""
+        return {ch: prose_words(t) for ch, t in self.reference_by_chapter().items()}
 
     @property
     def words(self) -> int:
@@ -65,7 +71,7 @@ def slugify(text: str, limit: int = 40) -> str:
 
 def skill_name(title: str) -> str:
     """A valid skill name: lowercase letters, digits and hyphens, at most 64 chars."""
-    return slugify(title, 64)
+    return slugify(title, MAX_NAME)
 
 
 def sentences(text: str) -> list[str]:
@@ -120,18 +126,51 @@ def distinctive_terms(
     return out
 
 
-def _definitions(blocks: list[Block], limit: int) -> list[str]:
+_FENCE_RE = re.compile(r"^```.*?^```[ \t]*$", re.S | re.M)
+_BOILERPLATE = ("Source pages ", "Open this file for questions about:")
+_EXAMPLE_LEAD_RE = re.compile(r"^From \*[^*\n]+\*:\s*")
+_BULLET_RE = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s+")
+
+
+def prose_text(markdown: str) -> str:
+    """The part of a reference file that can hold book prose.
+
+    Drops what cannot: fenced code, headings, table rows, the "Source pages"
+    and "Open this file for questions about" boilerplate, the "From *Section*:"
+    label of a worked example and list markers. The random control is given
+    this many words, so skill and control are compared on the same prose budget.
+    """
+    kept = []
+    for line in _FENCE_RE.sub("", markdown).splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith(("#", "|")) or stripped.startswith(_BOILERPLATE):
+            continue
+        kept.append(_BULLET_RE.sub("", _EXAMPLE_LEAD_RE.sub("", stripped)))
+    return "\n".join(kept)
+
+
+def prose_words(markdown: str) -> int:
+    return len(prose_text(markdown).split())
+
+
+def _definitions(blocks: list[Block], limit: int, already: set[str]) -> list[str]:
+    """Defining sentences not already in the file (``already``: the section leads)."""
     found = []
     for b in blocks:
         if b.kind != "paragraph":
             continue
         for s in sentences(b.text):
-            if DEFINING_RE.search(s) and 6 <= len(s.split()) <= 45 and s not in found:
+            fresh = s not in found and s not in already
+            if fresh and DEFINING_RE.search(s) and 6 <= len(s.split()) <= 45:
                 found.append(s)
     return found[:limit]
 
 
-def _examples(ch: Chapter, exclude: tuple[str, ...], limit: int, max_lines: int) -> list[str]:
+def _examples(
+    ch: Chapter, exclude: tuple[str, ...], limit: int, max_lines: int, already: set[str]
+) -> list[str]:
+    """One code example per section, led by the sentence before it unless the
+    file already has that sentence (``already``)."""
     out = []
     excluded = {e.lower() for e in exclude}
     for section in ch.sections:
@@ -142,6 +181,7 @@ def _examples(ch: Chapter, exclude: tuple[str, ...], limit: int, max_lines: int)
             if b.kind == "code" and b.text.count("\n") >= 1:
                 code = "\n".join(b.text.splitlines()[:max_lines])
                 lead = sentences(prev)[-1] if prev else ""
+                lead = "" if lead in already else lead
                 out.append(f"From *{section.title}*: {lead}\n\n```\n{code}\n```")
                 break  # one example per section keeps the file short
             if b.kind == "paragraph":
@@ -167,21 +207,26 @@ def extractive_reference(
     lines += ["## When to use", ""]
     lines += [f"Open this file for questions about: {', '.join(triggers)}.", ""]
     lines += ["## Sections", ""]
+    leads: set[str] = set()
     intro = [b for b in ch.intro if b.kind == "paragraph"]
     if intro:
-        lines += [" ".join(sentences(intro[0].text)[:lead_sentences]), ""]
+        lead = sentences(intro[0].text)[:lead_sentences]
+        leads.update(lead)
+        lines += [" ".join(lead), ""]
     for s in ch.sections:
         if s.title.lower() in excluded:
             continue
         lines.append(f"### {s.number} {s.title}".replace("###  ", "### "))
         paras = [b for b in s.blocks if b.kind == "paragraph"]
         if paras:
-            lines += ["", " ".join(sentences(paras[0].text)[:lead_sentences])]
+            lead = sentences(paras[0].text)[:lead_sentences]
+            leads.update(lead)
+            lines += ["", " ".join(lead)]
         lines.append("")
-    defs = _definitions(ch.blocks(exclude), max_definitions)
+    defs = _definitions(ch.blocks(exclude), max_definitions, leads)
     if defs:
         lines += ["## Key definitions", ""] + [f"- {d}" for d in defs] + [""]
-    examples = _examples(ch, exclude, max_examples, max_code_lines)
+    examples = _examples(ch, exclude, max_examples, max_code_lines, leads | set(defs))
     if examples:
         lines += ["## Worked examples", ""]
         for ex in examples:
@@ -260,8 +305,21 @@ def reference_file_name(ch: Chapter) -> str:
 
 
 def write_skill(pkg: SkillPackage, out_dir: str | Path) -> Path:
+    """Write the package to ``out_dir/<name>``.
+
+    Reference files left from an earlier conversion into the same folder
+    (``references/*.md`` this package does not have) are removed, so an agent
+    never routes to a chapter that no longer exists. Other files are kept.
+    """
+    if len(pkg.name) > MAX_NAME or not SKILL_NAME_RE.fullmatch(pkg.name):
+        raise ValueError(f"invalid skill name {pkg.name!r}: it would not stay inside {out_dir}")
     root = Path(out_dir) / pkg.name
-    (root / "references").mkdir(parents=True, exist_ok=True)
+    refs = root / "references"
+    refs.mkdir(parents=True, exist_ok=True)
+    wanted = {Path(f).name for f in pkg.references}
+    for old in refs.glob("*.md"):
+        if old.name not in wanted:
+            old.unlink()
     (root / "SKILL.md").write_text(pkg.skill_md, encoding="utf-8", newline="\n")
     for fname, text in pkg.references.items():
         (root / fname).write_text(text, encoding="utf-8", newline="\n")

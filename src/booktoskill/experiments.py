@@ -263,6 +263,16 @@ def load_gold(spec: BookSpec) -> tuple[list[GoldItem], dict[str, int]]:
     return gold_from_latex(spec.tex.read_text(encoding="utf-8"), spec.key)
 
 
+def glossary_terms(spec: BookSpec) -> set[str]:
+    """Every glossary term of the book, lowercased, for flagging index questions.
+
+    Taken before the PDF-revision filter: a term belongs to the glossary even if
+    its bold sentence was reworded in the PDF. Shared by ``run_book`` and the
+    model arm so both flag the same index questions.
+    """
+    return {it.term.lower() for it in load_gold(spec)[0]} if spec.tex is not None else set()
+
+
 def asciidoc_chapter_files(top: Path) -> list[tuple[str, Path]]:
     """Numbered chapters (``chNN-*.asc``) and appendices (``X-*.asc``) of a book."""
     out = []
@@ -303,6 +313,7 @@ def code_retention(book: Book, pkg: SkillPackage) -> dict[str, int]:
 def _skill_stats(conv: Conversion, pkg: SkillPackage) -> dict[str, int]:
     return {
         "reference_words": sum(len(t.split()) for t in pkg.references.values()),
+        "reference_prose_words": sum(pkg.prose_budget_by_chapter().values()),
         "skill_md_words": len(pkg.skill_md.split()),
         "book_words": sum(
             len(blocks_text(ch.blocks(HOLDOUT)).split())
@@ -340,8 +351,7 @@ def run_book(spec: BookSpec) -> tuple[dict, dict[str, SetRun]]:
         }
         runs["glossary"] = evaluate(glossary, conv.book, corpora, variants)
     if spec.has_index:
-        terms = {it.term.lower() for it in load_gold(spec)[0]} if spec.tex is not None else set()
-        index_items = load_index(spec, terms)
+        index_items = load_index(spec, glossary_terms(spec))
         kept, dropped = filter_to_pdf(index_items, conv)
         summary["questions"]["index"] = {
             "terms_with_anchors": len(index_items),

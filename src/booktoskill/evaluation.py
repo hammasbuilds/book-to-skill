@@ -61,14 +61,17 @@ def skill_variants(book: Book) -> dict[str, SkillPackage]:
 
 
 def random_budget_references(book: Book, pkg: SkillPackage, seed: int) -> dict[str, str]:
-    """Control: per chapter, random sentences up to ``pkg``'s file word count.
+    """Control: per chapter, random prose sentences up to ``pkg``'s prose word count.
 
-    Same budget, no selection rule. Built against each skill variant's own
-    budget: a control at a larger budget than the variant it is compared with
-    would make that variant look worse than chance by construction.
+    Same budget, no selection rule. The budget is the words of the variant's
+    own reference file that can hold prose (``skill.prose_text``): headings,
+    boilerplate and code cannot contain a gold sentence, and the random pool
+    is prose only, so counting them would hand the control about a third more
+    prose than the skill has and make the skill look worse than chance by
+    construction. Likewise each variant gets its own budget.
     """
     rng = random.Random(seed)
-    budgets = {ch: len(t.split()) for ch, t in pkg.reference_by_chapter().items()}
+    budgets = pkg.prose_budget_by_chapter()
     out: dict[str, str] = {}
     for ch in book.chapters:
         if ch.number not in budgets:

@@ -102,7 +102,7 @@ def synthetic_book() -> Book:
 def test_random_control_uses_each_variants_own_budget() -> None:
     book = synthetic_book()
     variants = skill_variants(book)
-    budget = {n: len(p.reference_by_chapter()["1"].split()) for n, p in variants.items()}
+    budget = {n: p.prose_budget_by_chapter()["1"] for n, p in variants.items()}
     got = {n: len(random_budget_references(book, p, 0)["1"].split()) for n, p in variants.items()}
     # Regression: the no-definitions skill was compared with random text at the
     # full skill's (larger) budget.
@@ -111,6 +111,21 @@ def test_random_control_uses_each_variants_own_budget() -> None:
         assert budget[name] <= got[name] < budget[name] + 15
     pkg = build_extractive_skill(book)
     assert random_budget_references(book, pkg, 3) == random_budget_references(book, pkg, 3)
+
+
+def test_random_control_gets_the_skills_prose_budget_not_its_file_size() -> None:
+    # Regression: the control was given the whole file's word count, headings,
+    # "Source pages", "Open this file for questions about" and code included,
+    # none of which can hold a gold sentence. The pool is prose, so random got
+    # about a third more prose than the skill and the skill looked worse than
+    # chance by construction.
+    book = synthetic_book()
+    pkg = build_extractive_skill(book)
+    ref = pkg.reference_by_chapter()["1"]
+    file_words, prose = len(ref.split()), pkg.prose_budget_by_chapter()["1"]
+    assert prose < file_words
+    got = len(random_budget_references(book, pkg, 0)["1"].split())
+    assert prose <= got < prose + 15 < file_words
 
 
 def test_evaluate_and_summarise(tiny: Conversion) -> None:
@@ -125,7 +140,9 @@ def test_evaluate_and_summarise(tiny: Conversion) -> None:
     run = evaluate(items, tiny.book, [corpus], variants, seeds=3)
     assert run.best["book_chunks"] == [1.0, 1.0]
     assert run.kept["skill"] == [True, False]  # S1 is a defining sentence; S2 is not
-    assert run.regex == [True, False] and run.defs_section == [True, False]
+    # S1 opens its section, so it is kept as a section lead and not repeated
+    # under Key definitions.
+    assert run.regex == [True, False] and run.defs_section == [False, False]
     assert len(run.random_kept["skill"]) == 3
     out = summarise(run)
     assert out["n"] == 2

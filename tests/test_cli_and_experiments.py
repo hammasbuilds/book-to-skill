@@ -56,6 +56,45 @@ def test_convert_writes_a_skill(
     assert "wrote" in capsys.readouterr().out
 
 
+@pytest.mark.parametrize("name", ["../escape", "..", "a/b", "Upper", "x" * 65, "-lead", ""])
+def test_convert_rejects_names_that_leave_out(
+    name: str, tiny_pdf: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # Regression: --name ../escape wrote the skill next to --out, not inside it.
+    out = tmp_path / "out"
+    with pytest.raises(SystemExit) as exc:
+        main(["convert", str(tiny_pdf), "--out", str(out), f"--name={name}"])
+    assert exc.value.code == 2
+    assert "not a valid skill name" in capsys.readouterr().err
+    assert not (tmp_path / "escape").exists() and not out.exists()
+
+
+def test_convert_accepts_a_valid_name(tiny_pdf: Path, tmp_path: Path) -> None:
+    assert main(["convert", str(tiny_pdf), "--out", str(tmp_path), "--name", "my-book-2"]) == 0
+    assert (tmp_path / "my-book-2" / "SKILL.md").is_file()
+
+
+def test_convert_out_is_a_file(
+    tiny_pdf: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    f = tmp_path / "taken"
+    f.write_text("x", encoding="utf-8")
+    assert main(["convert", str(tiny_pdf), "--out", str(f)]) == 2
+    assert "is a file" in capsys.readouterr().err
+    (tmp_path / "a-tiny-book").write_text("x", encoding="utf-8")  # file where the folder goes
+    assert main(["convert", str(tiny_pdf), "--out", str(tmp_path)]) == 2
+    assert "is a file" in capsys.readouterr().err
+
+
+def test_unmatched_exclude_section_warns(
+    tiny_pdf: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    args = ["convert", str(tiny_pdf), "--out", str(tmp_path)]
+    assert main([*args, "--exclude-section", "Exercizes", "--exclude-section", "glossary"]) == 0
+    err = capsys.readouterr().err
+    assert "'Exercizes' matches no section" in err and "'glossary'" not in err
+
+
 def test_inspect_and_search(tiny_pdf: Path, capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["inspect", str(tiny_pdf), "--sections"]) == 0
     out = capsys.readouterr().out

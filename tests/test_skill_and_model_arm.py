@@ -25,6 +25,9 @@ from booktoskill.references import GoldItem
 from booktoskill.skill import (
     MAX_DESCRIPTION,
     build_extractive_skill,
+    prose_text,
+    prose_words,
+    sentences,
     skill_markdown,
     skill_name,
     write_skill,
@@ -87,6 +90,38 @@ def test_excluded_sections_do_not_reach_the_skill(tiny: Conversion) -> None:
 def test_definitions_can_be_disabled(tiny: Conversion) -> None:
     pkg = build_extractive_skill(tiny.book, max_definitions=0)
     assert all("## Key definitions" not in t for t in pkg.references.values())
+
+
+def test_definitions_do_not_repeat_section_leads(tiny: Conversion) -> None:
+    # Regression: "A variable is a name that refers to a value." was both a
+    # section lead and a key definition, so it was printed (and counted) twice.
+    ref = build_extractive_skill(tiny.book).reference_by_chapter()["1"]
+    assert ref.count("A variable is a name that refers to a value.") == 1
+    for ref in build_extractive_skill(tiny.book).references.values():
+        prose = [s for line in prose_text(ref).splitlines() for s in sentences(line)]
+        assert len(prose) == len(set(prose))
+
+
+def test_prose_text_drops_what_cannot_hold_book_prose() -> None:
+    md = (
+        "# Chapter 1: Start\n\nSource pages 3-9 of the PDF.\n\n## When to use\n\n"
+        "Open this file for questions about: loops, lists.\n\n## Sections\n\n"
+        "One two three.\n### 1.1 A\n\nFour five.\n\n## Key definitions\n\n- Six seven.\n\n"
+        "## Worked examples\n\nFrom *A*: Eight nine.\n\n```\nx = 1\ny = 2\n```\n"
+        "| a | b |\n"
+    )
+    assert prose_text(md) == "One two three.\nFour five.\nSix seven.\nEight nine."
+    assert prose_words(md) == 9
+
+
+def test_rewriting_a_skill_removes_stale_reference_files(tiny: Conversion, tmp_path: Path) -> None:
+    pkg = build_extractive_skill(tiny.book)
+    root = write_skill(pkg, tmp_path)
+    (root / "references" / "ch09-old-chapter.md").write_text("stale", encoding="utf-8")
+    (root / "references" / "notes.txt").write_text("mine", encoding="utf-8")
+    write_skill(pkg, tmp_path)
+    left = sorted(p.name for p in (root / "references").iterdir())
+    assert left == ["ch01-getting-started.md", "ch02-next-steps.md", "notes.txt"]
 
 
 def test_description_is_capped_and_quoted() -> None:
@@ -152,10 +187,21 @@ def test_llm_skill_with_fake_model(tiny: Conversion) -> None:
     }
 
 
-def test_chapter_markdown_truncates(tiny: Conversion) -> None:
+def test_chapter_markdown_truncates_and_says_so(tiny: Conversion) -> None:
     ch = [c for c in tiny.book.chapters if c.number == "1"][0]
-    assert len(chapter_markdown(ch, (), max_words=20).split()) <= 20
-    assert "Glossary" not in chapter_markdown(ch, ("glossary",), max_words=10_000)
+    cut = chapter_markdown(ch, (), max_words=20)
+    assert len(cut.text.split()) == cut.kept_words <= 20 and cut.truncated
+    whole = chapter_markdown(ch, ("glossary",), max_words=10_000)
+    assert "Glossary" not in whole.text and not whole.truncated
+
+
+def test_truncated_chapters_are_recorded_in_the_generation_report(tiny: Conversion) -> None:
+    # Regression: a chapter over the prompt's word cap was cut silently.
+    client = FakeClient(fake_reference)
+    _, report = build_llm_skill(tiny.book, client, budgets={}, max_chapter_words=20)
+    assert report.truncated and all(kept <= 20 < total for kept, total in report.truncated.values())
+    _, full = build_llm_skill(tiny.book, FakeClient(fake_reference), budgets={})
+    assert full.truncated == {}
 
 
 def test_required_headings_match_extractive_writer(tiny: Conversion) -> None:
@@ -212,7 +258,26 @@ def test_run_item_makes_exactly_the_estimated_calls(tiny: Conversion) -> None:
     assert not by[("-", "closed_book")].correct
     assert by[("-", "rag")].correct and by[("llm", "both")].correct
     assert by[("extractive", "skill")].routed_to_gold_chapter
+    assert all(o.correct_second_judge is None for o in outcomes)
     assert question(ITEM) == 'In the book, what is meant by "variable"?'
+
+    # a second judge from another family grades every answer again
+    contrary = FakeClient(lambda p, s: "INCORRECT")
+    again = run_item(
+        FakeClient(responder),
+        grader,
+        ITEM,
+        skills,
+        BM25([c.text for c in chunks]),
+        chunks,
+        2,
+        contrary,
+    )
+    assert len(contrary.prompts) == calls_per_item(2, judges=2)["judge"] // 2
+    assert all(o.correct_second_judge is False for o in again)
+    s = summarise(again)
+    assert s["judge_agreement"]["n"] == len(again)
+    assert s["conditions"]["-/rag"]["second_judge_accuracy"]["value"] == 0.0
 
 
 def test_summarise_pairs_conditions_against_rag() -> None:
