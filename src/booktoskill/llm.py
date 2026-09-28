@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import urllib.error
 import urllib.request
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -110,8 +109,14 @@ def ollama_transport(url: str = DEFAULT_URL, timeout: float = 600.0) -> Callable
         try:
             with urllib.request.urlopen(req, timeout=timeout) as resp:
                 return json.loads(resp.read().decode("utf-8"))["response"]
-        except urllib.error.URLError as exc:
-            raise LLMError(f"ollama at {url} failed for {model}: {exc}") from exc
+        # URLError is an OSError; a read timeout (TimeoutError, socket.timeout)
+        # or a dropped connection mid-read is an OSError that is not a URLError.
+        except OSError as exc:
+            raise LLMError(f"ollama at {url} failed for {model}: {exc!r}") from exc
+        except (ValueError, KeyError) as exc:  # not JSON, or no "response" field
+            raise LLMError(
+                f"ollama at {url} sent an unreadable reply for {model}: {exc!r}"
+            ) from exc
 
     return call
 
@@ -127,7 +132,7 @@ def list_models(url: str = DEFAULT_URL, timeout: float = 5.0) -> list[str]:
     try:
         with urllib.request.urlopen(f"{url}/api/tags", timeout=timeout) as resp:
             data = json.loads(resp.read().decode("utf-8"))
-    except (urllib.error.URLError, TimeoutError) as exc:
+    except (OSError, ValueError) as exc:
         raise LLMError(f"ollama is not reachable at {url}: {exc}") from exc
     return [m["name"] for m in data.get("models", [])]
 

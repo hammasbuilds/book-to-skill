@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 # Run the model arm end to end: the model-written skill for both books, then
-# closed-book / RAG / skill / skill+RAG answering, judged by the same model.
+# closed-book / RAG / skill / skill+RAG answering, graded by the strongest pulled
+# model (JUDGE, which is also the answering model) and again by a model from
+# another family (SECOND_JUDGE), so the agreement of the two judges is reported.
 #
 #   scripts/run_models.sh --dry-run   print the job list and call count, call nothing
 #   scripts/run_models.sh             check resources, then run (resumable: every
 #                                     generation is cached in data/cache/llm)
 #
 # Environment overrides: OLLAMA_URL (default http://127.0.0.1:11434),
-# MODEL (default qwen2.5:14b-instruct), MIN_FREE_RAM_GB (8), MIN_FREE_VRAM_GB (10),
+# MODEL (default qwen2.5:14b-instruct), JUDGE (default $MODEL), SECOND_JUDGE
+# (default llama3.2:3b; none to skip), MIN_FREE_RAM_GB (8), MIN_FREE_VRAM_GB (10),
 # SECONDS_PER_CALL (6, only used for the time estimate).
 set -euo pipefail
 
@@ -15,6 +18,8 @@ cd "$(dirname "$0")/.."
 unset VIRTUAL_ENV
 OLLAMA_URL=${OLLAMA_URL:-http://127.0.0.1:11434}
 MODEL=${MODEL:-qwen2.5:14b-instruct}
+JUDGE=${JUDGE:-$MODEL}
+SECOND_JUDGE=${SECOND_JUDGE:-llama3.2:3b}
 MIN_FREE_RAM_GB=${MIN_FREE_RAM_GB:-8}
 MIN_FREE_VRAM_GB=${MIN_FREE_VRAM_GB:-10}
 SECONDS_PER_CALL=${SECONDS_PER_CALL:-6}
@@ -24,7 +29,8 @@ if [[ ! -f data/raw/thinkpython2.pdf ]]; then
   exit 1
 fi
 
-plan=$(uv run book-to-skill model-arm --dry-run --model "$MODEL" --judge-model "$MODEL")
+JUDGES=(--judge-model "$JUDGE" --second-judge "$SECOND_JUDGE")
+plan=$(uv run book-to-skill model-arm --dry-run --model "$MODEL" "${JUDGES[@]}")
 echo "$plan"
 calls=$(echo "$plan" | sed -n 's/.*"total_calls": \([0-9]*\).*/\1/p')
 echo "estimated time at ${SECONDS_PER_CALL}s/call: $((calls * SECONDS_PER_CALL / 3600))h $((calls * SECONDS_PER_CALL % 3600 / 60))m (cached calls are free)"
@@ -66,6 +72,6 @@ if ! curl -sf -m 5 "$OLLAMA_URL/api/tags" >/dev/null; then
 fi
 
 uv run book-to-skill model-arm \
-  --url "$OLLAMA_URL" --model "$MODEL" --judge-model "$MODEL" \
+  --url "$OLLAMA_URL" --model "$MODEL" "${JUDGES[@]}" \
   --data data --results results --out out/skills --cache data/cache/llm
 echo "wrote results/model_arm.json and results/model_outcomes.jsonl"

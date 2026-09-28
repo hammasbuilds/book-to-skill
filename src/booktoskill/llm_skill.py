@@ -51,8 +51,22 @@ CHAPTER TEXT
 """
 
 
-def chapter_markdown(ch: Chapter, exclude: tuple[str, ...], max_words: int) -> str:
-    """The chapter as plain Markdown, truncated to ``max_words`` words."""
+MAX_CHAPTER_WORDS = 9000  # fits num_ctx 16384 with the prompt and the reply
+
+
+@dataclass(frozen=True)
+class ChapterText:
+    text: str
+    words: int  # words of the chapter (excluded sections left out)
+    kept_words: int  # words given to the model
+
+    @property
+    def truncated(self) -> bool:
+        return self.kept_words < self.words
+
+
+def chapter_markdown(ch: Chapter, exclude: tuple[str, ...], max_words: int) -> ChapterText:
+    """The chapter as plain Markdown, cut at the last whole block within ``max_words``."""
     excluded = {e.lower() for e in exclude}
     parts: list[str] = [b.text for b in ch.intro]
     for s in ch.sections:
@@ -69,25 +83,33 @@ def chapter_markdown(ch: Chapter, exclude: tuple[str, ...], max_words: int) -> s
             break
         kept.append(p)
         words += n
-    return "\n\n".join(kept)
+    total = sum(len(p.split()) for p in parts)
+    return ChapterText("\n\n".join(kept), total, words)
 
 
 def reference_prompt(
-    book_title: str, ch: Chapter, budget: int, exclude: tuple[str, ...], max_words: int = 9000
-) -> str:
+    book_title: str,
+    ch: Chapter,
+    budget: int,
+    exclude: tuple[str, ...],
+    max_words: int = MAX_CHAPTER_WORDS,
+) -> tuple[str, ChapterText]:
+    """The prompt for one chapter, and what of the chapter it contains."""
     sections = "\n".join(
         f"- {s.number} {s.title}".rstrip()
         for s in ch.sections
         if s.title.lower() not in {e.lower() for e in exclude}
     )
-    return PROMPT.format(
+    text = chapter_markdown(ch, exclude, max_words)
+    prompt = PROMPT.format(
         number=ch.number,
         title=ch.title,
         book=book_title,
         sections=sections or "- (no numbered sections)",
         budget=budget,
-        text=chapter_markdown(ch, exclude, max_words),
+        text=text.text,
     )
+    return prompt, text
 
 
 @dataclass
@@ -95,6 +117,8 @@ class GenerationReport:
     missing_headings: dict[str, list[str]] = field(default_factory=dict)
     words: dict[str, int] = field(default_factory=dict)
     budgets: dict[str, int] = field(default_factory=dict)
+    # chapter -> [words given to the model, words in the chapter], for chapters cut short
+    truncated: dict[str, list[int]] = field(default_factory=dict)
 
 
 def build_llm_skill(
@@ -103,6 +127,7 @@ def build_llm_skill(
     budgets: dict[str, int],
     name: str | None = None,
     exclude: tuple[str, ...] = (),
+    max_chapter_words: int = MAX_CHAPTER_WORDS,
 ) -> tuple[SkillPackage, GenerationReport]:
     """One model call per chapter; ``budgets`` maps chapter number to a word cap."""
     chapters = [ch for ch in book.chapters if is_content_chapter(ch)]
@@ -115,7 +140,10 @@ def build_llm_skill(
     refs: dict[str, str] = {}
     for ch in chapters:
         budget = budgets.get(ch.number, 600)
-        text = client.generate(reference_prompt(book.title, ch, budget, exclude), SYSTEM).strip()
+        prompt, source = reference_prompt(book.title, ch, budget, exclude, max_chapter_words)
+        if source.truncated:
+            report.truncated[ch.number] = [source.kept_words, source.words]
+        text = client.generate(prompt, SYSTEM).strip()
         missing = [h for h in REQUIRED_HEADINGS if h not in text]
         if missing:
             report.missing_headings[ch.number] = missing

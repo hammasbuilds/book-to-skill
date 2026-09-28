@@ -123,7 +123,12 @@ def data_dir(tiny_pdf: Path, tmp_path: Path) -> Path:
 def test_cli_dry_run(data_dir: Path, capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["model-arm", "--dry-run", "--data", str(data_dir)]) == 0
     plan = json.loads(capsys.readouterr().out)
-    assert plan["total_calls"] == 2 * (2 + 2 * 14)
+    # per question: 8 answer/route + 6 judge calls, times two judges by default
+    assert plan["total_calls"] == 2 * (2 + 2 * (8 + 12))
+    assert plan["jobs"][0]["chapters_truncated_for_the_writer"] == {}
+    args = ["model-arm", "--dry-run", "--data", str(data_dir), "--second-judge", "none"]
+    assert main(args) == 0
+    assert json.loads(capsys.readouterr().out)["total_calls"] == 2 * (2 + 2 * 14)
 
 
 def test_cli_run_with_fake_ollama(
@@ -135,7 +140,7 @@ def test_cli_run_with_fake_ollama(
     import booktoskill.llm as llm
 
     transport = Transport()
-    monkeypatch.setattr(llm, "list_models", lambda url: ["qwen2.5:14b-instruct"])
+    monkeypatch.setattr(llm, "list_models", lambda url: ["qwen2.5:14b-instruct", "llama3.2:3b"])
     monkeypatch.setattr(
         llm,
         "ollama_client",
@@ -146,8 +151,11 @@ def test_cli_run_with_fake_ollama(
     assert main(args) == 0
     out = capsys.readouterr().out
     new, cached = map(int, re.search(r"model calls: (\d+) new, (\d+) cached", out).groups())
-    assert new == transport.calls and new + cached == 2 * (2 + 2 * 14)
-    assert (tmp_path / "r" / "model_arm.json").is_file()
+    assert new == transport.calls and new + cached == 2 * (2 + 2 * (8 + 12))
+    report = json.loads((tmp_path / "r" / "model_arm.json").read_text(encoding="utf-8"))
+    assert report["second_judge"] == "llama3.2:3b"
+    # the fake grades both judges the same way, so they agree on every answer
+    assert report["pooled_qa"]["judge_agreement"]["agreement"] == 1.0
 
 
 def test_cli_refuses_when_model_not_pulled(
@@ -155,6 +163,42 @@ def test_cli_refuses_when_model_not_pulled(
 ) -> None:
     import booktoskill.llm as llm
 
-    monkeypatch.setattr(llm, "list_models", lambda url: ["llama3:8b"])
+    monkeypatch.setattr(llm, "list_models", lambda url: ["qwen2.5:14b-instruct"])
     assert main(["model-arm", "--data", str(data_dir)]) == 2
-    assert "ollama pull" in capsys.readouterr().err
+    assert "has not pulled llama3.2:3b" in capsys.readouterr().err
+
+
+def test_ollama_transport_wraps_timeouts_and_bad_replies(monkeypatch: pytest.MonkeyPatch) -> None:
+    import io
+    import urllib.request
+
+    from booktoskill.llm import LLMError, ollama_transport
+
+    call = ollama_transport("http://127.0.0.1:1")
+
+    def raising(exc: BaseException):
+        def urlopen(*a, **kw):
+            raise exc
+
+        return urlopen
+
+    # Regression: only URLError was caught, so a read timeout (socket.timeout is
+    # TimeoutError) or a dropped connection escaped as a traceback.
+    for exc in (TimeoutError("timed out"), ConnectionResetError(), OSError("broken pipe")):
+        monkeypatch.setattr(urllib.request, "urlopen", raising(exc))
+        with pytest.raises(LLMError, match="failed"):
+            call("m", "", "p", {})
+    monkeypatch.setattr(urllib.request, "urlopen", lambda *a, **kw: io.BytesIO(b"<html>"))
+    with pytest.raises(LLMError, match="unreadable"):
+        call("m", "", "p", {})
+
+
+def test_judge_agreement_kappa() -> None:
+    from booktoskill.model_arm import judge_agreement
+
+    same = judge_agreement([(True, True), (False, False)] * 5)
+    assert same["agreement"] == 1.0 and same["cohen_kappa"] == 1.0
+    # agreement at exactly the chance rate gives kappa 0
+    chance = judge_agreement([(True, True), (True, False), (False, True), (False, False)])
+    assert chance["agreement"] == 0.5 and chance["cohen_kappa"] == 0.0
+    assert judge_agreement([(True, True)] * 3)["cohen_kappa"] == 1.0

@@ -22,9 +22,9 @@ from booktoskill.evaluation import (
     filter_to_pdf,
 )
 from booktoskill.evaluation import summarise as summarise_set
-from booktoskill.experiments import BookSpec, load_gold, load_index
+from booktoskill.experiments import BookSpec, glossary_terms, load_gold, load_index
 from booktoskill.llm import Client
-from booktoskill.llm_skill import build_llm_skill
+from booktoskill.llm_skill import MAX_CHAPTER_WORDS, build_llm_skill, chapter_markdown
 from booktoskill.metrics import bootstrap_ci
 from booktoskill.pipeline import Conversion, convert
 from booktoskill.references import GoldItem
@@ -45,7 +45,7 @@ def prepare(spec: BookSpec) -> BookJob:
     conv = convert(spec.pdf, title=spec.title)
     items, _ = load_gold(spec)
     items, _ = filter_to_pdf(items, conv)
-    index_items, _ = filter_to_pdf(load_index(spec, {it.term.lower() for it in items}), conv)
+    index_items, _ = filter_to_pdf(load_index(spec, glossary_terms(spec)), conv)
     extractive = build_extractive_skill(conv.book, exclude=HOLDOUT)
     return BookJob(spec, conv, items, index_items, extractive)
 
@@ -75,21 +75,28 @@ def question_books(specs: list[BookSpec]) -> list[BookSpec]:
     return books
 
 
-def plan(specs: list[BookSpec]) -> dict:
+def plan(specs: list[BookSpec], judges: int = 1) -> dict:
     """The job list and call count, without calling any model."""
     specs = question_books(specs)
-    per_item = calls_per_item(n_skills=2)
+    per_item = calls_per_item(n_skills=2, judges=judges)
     jobs = []
     total = 0
     for spec in specs:
         job = prepare(spec)
-        chapters = sum(1 for ch in job.conv.book.chapters if is_content_chapter(ch))
+        content = [ch for ch in job.conv.book.chapters if is_content_chapter(ch)]
+        chapters = len(content)
         calls = chapters + len(job.items) * per_item["total"]
         total += calls
+        cut = {
+            ch.number: [t.kept_words, t.words]
+            for ch in content
+            if (t := chapter_markdown(ch, HOLDOUT, MAX_CHAPTER_WORDS)).truncated
+        }
         jobs.append(
             {
                 "book": spec.key,
                 "skill_generation_calls": chapters,
+                "chapters_truncated_for_the_writer": cut,
                 "questions": len(job.items),
                 "qa_calls": len(job.items) * per_item["total"],
                 "calls": calls,
@@ -127,7 +134,31 @@ def summarise(outcomes: list[Outcome]) -> dict:
             if common:
                 d = [float(rows[q].correct) - float(rag[q].correct) for q in common]
                 diffs[f"{variant}/{condition} minus rag"] = _rate(d)
-    return {"conditions": table, "paired_vs_rag": diffs}
+    out = {"conditions": table, "paired_vs_rag": diffs}
+    pairs = [(o.correct, o.correct_second_judge) for o in outcomes]
+    if pairs and all(b is not None for _, b in pairs):
+        out["judge_agreement"] = judge_agreement([(a, bool(b)) for a, b in pairs])
+        for (variant, condition), rows in by.items():
+            vals = [float(bool(o.correct_second_judge)) for o in rows.values()]
+            table[f"{variant}/{condition}"]["second_judge_accuracy"] = _rate(vals)
+    return out
+
+
+def judge_agreement(pairs: list[tuple[bool, bool]]) -> dict:
+    """Raw agreement and Cohen's kappa between the primary and the second judge."""
+    n = len(pairs)
+    agree = sum(a == b for a, b in pairs) / n
+    p_a = sum(a for a, _ in pairs) / n
+    p_b = sum(b for _, b in pairs) / n
+    chance = p_a * p_b + (1 - p_a) * (1 - p_b)
+    kappa = (agree - chance) / (1 - chance) if chance < 1 else 1.0
+    return {
+        "n": n,
+        "agreement": round(agree, 4),
+        "cohen_kappa": round(kappa, 4),
+        "primary_correct_rate": round(p_a, 4),
+        "second_correct_rate": round(p_b, 4),
+    }
 
 
 def run(
@@ -137,11 +168,17 @@ def run(
     client: Client,
     judge_client: Client,
     k: int = 5,
+    second_judge: Client | None = None,
 ) -> dict:
     specs = question_books(specs)
     results_dir, out_dir = Path(results_dir), Path(out_dir)
     results_dir.mkdir(parents=True, exist_ok=True)
-    report: dict = {"model": client.model, "judge": judge_client.model, "books": {}}
+    report: dict = {
+        "model": client.model,
+        "judge": judge_client.model,
+        "second_judge": second_judge.model if second_judge is not None else None,
+        "books": {},
+    }
     outcomes: list[Outcome] = []
     for spec in specs:
         job = prepare(spec)
@@ -169,12 +206,16 @@ def run(
         skills = {"extractive": job.extractive, "llm": llm_pkg}
         book_outcomes: list[Outcome] = []
         for item in job.items:
-            book_outcomes.extend(run_item(client, judge_client, item, skills, index, chunks, k))
+            book_outcomes.extend(
+                run_item(client, judge_client, item, skills, index, chunks, k, second_judge)
+            )
         outcomes.extend(book_outcomes)
         report["books"][spec.key] = {
             "generation": asdict(gen),
             "llm_skill_words": sum(len(t.split()) for t in refs.values()),
             "extractive_skill_words": sum(budgets.values()),
+            "llm_skill_prose_words": sum(llm_pkg.prose_budget_by_chapter().values()),
+            "extractive_skill_prose_words": sum(job.extractive.prose_budget_by_chapter().values()),
             "term_mentioned": {
                 "extractive": round(term_mentioned(job.items, extractive_refs), 4),
                 "llm": round(term_mentioned(job.items, refs), 4),
