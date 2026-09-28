@@ -182,7 +182,8 @@ def _examples(
                 code = "\n".join(b.text.splitlines()[:max_lines])
                 lead = sentences(prev)[-1] if prev else ""
                 lead = "" if lead in already else lead
-                out.append(f"From *{section.title}*: {lead}\n\n```\n{code}\n```")
+                label = f"From *{section.title}*:" + (f" {lead}" if lead else "")
+                out.append(f"{label}\n\n```\n{code}\n```")
                 break  # one example per section keeps the file short
             if b.kind == "paragraph":
                 prev = b.text
@@ -219,9 +220,11 @@ def extractive_reference(
         lines.append(f"### {s.number} {s.title}".replace("###  ", "### "))
         paras = [b for b in s.blocks if b.kind == "paragraph"]
         if paras:
-            lead = sentences(paras[0].text)[:lead_sentences]
+            # a section may open with a sentence the chapter intro already used
+            lead = [s for s in sentences(paras[0].text)[:lead_sentences] if s not in leads]
             leads.update(lead)
-            lines += ["", " ".join(lead)]
+            if lead:
+                lines += ["", " ".join(lead)]
         lines.append("")
     defs = _definitions(ch.blocks(exclude), max_definitions, leads)
     if defs:

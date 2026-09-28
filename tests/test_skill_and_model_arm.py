@@ -102,6 +102,19 @@ def test_definitions_do_not_repeat_section_leads(tiny: Conversion) -> None:
         assert len(prose) == len(set(prose))
 
 
+def test_a_section_lead_does_not_repeat_the_intro() -> None:
+    from booktoskill.layout import Block
+    from booktoskill.skill import extractive_reference
+    from booktoskill.structure import Chapter, Section
+
+    same = "Inheritance is the ability to define a new class from an existing one."
+    ch = Chapter("18", "Inheritance", 0)
+    ch.intro = [Block("paragraph", "Objects matter. " + same, 0)]
+    ch.sections = [Section("18.1", "Card", 0, [Block("paragraph", same + " Cards next.", 0)])]
+    ref = extractive_reference(ch, ["cards"])
+    assert ref.count(same) == 1 and "Cards next." in ref
+
+
 def test_prose_text_drops_what_cannot_hold_book_prose() -> None:
     md = (
         "# Chapter 1: Start\n\nSource pages 3-9 of the PDF.\n\n## When to use\n\n"
