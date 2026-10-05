@@ -14,11 +14,12 @@
   <img src="https://img.shields.io/badge/python-3.11%2B-blue" alt="python">
   <img src="https://img.shields.io/badge/tests-139%20passing-success" alt="tests">
   <img src="https://img.shields.io/badge/runtime%20deps-pypdf%20only-success" alt="dependencies">
-  <img src="https://img.shields.io/badge/model%20arm-queued%2C%20not%20run-orange" alt="model arm">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="license"></a>
 </p>
 
 Inspired by [virgiliojr94/book-to-skill](https://github.com/virgiliojr94/book-to-skill); no code from it is used.
+
+**Status:** extraction, retrieval and every number in this README: done. Model arm: built and tested against a fake; GPU run pending.
 
 ---
 
@@ -60,7 +61,7 @@ is scored against an HTML edition of each book that the PDF was not involved in 
 
 ## Findings
 
-Every number below is in a file under [`results/`](results/), produced on this machine by
+Every number below is in a file under [`results/`](results/), produced by
 `book-to-skill experiments`. Primary numbers are on the **index test split** (261 terms,
 never used while building anything); the dev split (1,087 terms) and every other view are in
 the same file. Intervals are 95% bootstraps over terms (2,000 resamples) unless marked
@@ -161,7 +162,7 @@ question set that shares a proxy with the system under test inflates the result.
 Glossary sections are held out of every corpus and of skill generation in both sets. The
 skill writer never looks at bold type.
 
-### The model arm (built and tested, queued, not run)
+### The model arm (GPU run pending)
 
 `book-to-skill model-arm` has a local model (`qwen2.5:14b-instruct` through Ollama) write
 every chapter's reference file at the same word budget as the extractive file, measures that
